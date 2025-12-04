@@ -39,22 +39,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Estado de ubicación
               _buildLocationStatus(),
               const SizedBox(height: 24),
-              
+
               // Botón principal
               _buildMainButton(),
               const SizedBox(height: 16),
-              
+
               // Botón de filtros
               _buildFiltersToggle(),
-              
+
               // Filtros (si están visibles)
               if (_showFilters) ...[
                 const SizedBox(height: 24),
                 _buildFilters(),
               ],
-              
+
               const SizedBox(height: 24),
-              
+
               // Resultado (placeholder)
               _buildResultPlaceholder(),
             ],
@@ -104,17 +104,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMainButton() {
     return ElevatedButton(
-      onPressed: _isLoading ? null : () {
-        setState(() {
-          _isLoading = true;
-        });
-        // TODO: Buscar lugares aleatorios
-        Future.delayed(const Duration(seconds: 2), () {
-          setState(() {
-            _isLoading = false;
-          });
-        });
-      },
+      onPressed: _isLoading
+          ? null
+          : () {
+              setState(() {
+                _isLoading = true;
+              });
+              // TODO: Buscar lugares aleatorios
+              Future.delayed(const Duration(seconds: 2), () {
+                setState(() {
+                  _isLoading = false;
+                });
+              });
+            },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 20),
         backgroundColor: AppColors.primary,
@@ -213,18 +215,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Icon(
-              Icons.place,
-              size: 64,
-              color: AppColors.textMuted,
-            ),
+            Icon(Icons.place, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
             Text(
               'Presiona el botón para descubrir lugares increíbles cerca de ti',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],

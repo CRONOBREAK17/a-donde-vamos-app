@@ -39,10 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Explorar',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explorar'),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Historial',
@@ -51,10 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.favorite),
             label: 'Favoritos',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );

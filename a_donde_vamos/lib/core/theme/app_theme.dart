@@ -16,7 +16,7 @@ class AppTheme {
         background: AppColors.background,
         error: AppColors.error,
       ),
-      
+
       // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
@@ -28,7 +28,7 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
       ),
-      
+
       // Botones
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -39,13 +39,10 @@ class AppTheme {
             borderRadius: BorderRadius.circular(25),
           ),
           elevation: 5,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
-      
+
       // Cards
       cardTheme: CardTheme(
         color: AppColors.cardBackground,
@@ -55,7 +52,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
-      
+
       // Input fields
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -75,7 +72,7 @@ class AppTheme {
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         hintStyle: const TextStyle(color: AppColors.textMuted),
       ),
-      
+
       // Texto
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -88,14 +85,8 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: AppColors.textPrimary,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: AppColors.textSecondary,
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
+        bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary),
       ),
     );
   }

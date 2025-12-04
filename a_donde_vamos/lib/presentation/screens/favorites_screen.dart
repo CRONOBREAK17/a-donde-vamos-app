@@ -8,9 +8,7 @@ class FavoritesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('⭐ Favoritos'),
-      ),
+      appBar: AppBar(title: const Text('⭐ Favoritos')),
       body: const Center(
         child: Text(
           'Pantalla de Favoritos\n(Próximamente)',

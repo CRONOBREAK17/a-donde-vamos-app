@@ -8,9 +8,7 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('📜 Historial'),
-      ),
+      appBar: AppBar(title: const Text('📜 Historial')),
       body: const Center(
         child: Text(
           'Pantalla de Historial\n(Próximamente)',
