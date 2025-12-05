@@ -37,6 +37,18 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Archivos generados automáticamente por Flutter
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+**/macos/flutter/GeneratedPluginRegistrant.swift
+a_donde_vamos/linux/flutter/
+a_donde_vamos/windows/flutter/
+a_donde_vamos/macos/Flutter/
+
 # Symbolication related
 app.*.symbols
 
