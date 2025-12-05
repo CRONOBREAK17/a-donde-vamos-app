@@ -199,17 +199,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
           isSuccess: true,
         );
 
-        // Mostrar logro si se desbloqueó alguno
-        print('🔍 Verificando badge: ${result['badge']}');
-        if (result['badge'] != null) {
-          final badge = result['badge'] as Map<String, dynamic>;
-          print('🎊 Mostrando diálogo de logro: $badge');
-          AchievementDialog.show(
-            context: context,
-            badgeName: badge['name'] ?? 'Nuevo logro',
-            badgeDescription: badge['description'] ?? '',
-            badgeIcon: badge['icon_url'],
-          );
+        // Mostrar logros si se desbloquearon
+        print('🔍 Verificando badges: ${result['badges']}');
+        if (result['badges'] != null &&
+            result['badges'] is List &&
+            (result['badges'] as List).isNotEmpty) {
+          final badges = result['badges'] as List;
+          print('🎊 Mostrando ${badges.length} logros secuencialmente...');
+
+          // Mostrar cada insignia con delay entre ellas
+          for (int i = 0; i < badges.length; i++) {
+            final badge = badges[i] as Map<String, dynamic>;
+            await AchievementDialog.show(
+              context: context,
+              badgeName: badge['name'] ?? 'Nuevo logro',
+              badgeDescription: badge['description'] ?? '',
+              badgeIcon: badge['icon_url'],
+              delay: Duration(
+                seconds: 3 + (i * 6),
+              ), // 3s para primero, +6s para cada siguiente
+            );
+          }
         } else {
           print('❌ No se desbloqueó ninguna insignia');
         }

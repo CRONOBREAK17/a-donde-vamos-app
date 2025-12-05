@@ -14,7 +14,9 @@ class BadgeService {
   /// - 'vote_made': después de dar like a una opinión
   /// - 'profile_update': al actualizar biografía/foto
   /// - 'block_made': al bloquear un lugar
-  Future<Map<String, dynamic>?> checkAndAwardBadges({
+  ///
+  /// Retorna una lista de todas las insignias desbloqueadas
+  Future<List<Map<String, dynamic>>> checkAndAwardBadges({
     required String userId,
     String? event,
   }) async {
@@ -24,8 +26,8 @@ class BadgeService {
 
       print('📊 Estadísticas del usuario: $stats');
 
-      // Lista de insignias a verificar
-      Map<String, dynamic>? newBadge;
+      // Lista de insignias desbloqueadas en esta acción
+      List<Map<String, dynamic>> newBadges = [];
 
       // ============ LOGROS POR OPINIONES (CONTEXT: review_made) ============
       if (event == 'review_made') {
@@ -40,88 +42,108 @@ class BadgeService {
 
         // ID 13: Primer Comentario - 1 opinión
         if (reviewCount == 1) {
-          newBadge = await _awardBadge(userId, 13);
+          final badge = await _awardBadge(userId, 13);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 49: Comentarista - 2 opiniones
         else if (reviewCount == 2) {
-          newBadge = await _awardBadge(userId, 49);
+          final badge = await _awardBadge(userId, 49);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 14: Autor Prolífico - 5 opiniones
         else if (reviewCount == 5) {
-          newBadge = await _awardBadge(userId, 14);
+          final badge = await _awardBadge(userId, 14);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 50: Crítico Regular - 10 opiniones
         else if (reviewCount == 10) {
-          newBadge = await _awardBadge(userId, 50);
+          final badge = await _awardBadge(userId, 50);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 15: Crítico Dedicado - 15 opiniones
         else if (reviewCount == 15) {
-          newBadge = await _awardBadge(userId, 15);
+          final badge = await _awardBadge(userId, 15);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 51: Crítico Feroz - 25 opiniones
         else if (reviewCount == 25) {
-          newBadge = await _awardBadge(userId, 51);
+          final badge = await _awardBadge(userId, 51);
+          if (badge != null) newBadges.add(badge);
         }
         // ID 16: Crítico Experto - 30 opiniones
         else if (reviewCount == 30) {
-          newBadge = await _awardBadge(userId, 16);
+          final badge = await _awardBadge(userId, 16);
+          if (badge != null) newBadges.add(badge);
         }
 
-        return newBadge;
+        return newBadges;
       }
 
       // ============ LOGROS POR VISITAS (CONTEXT: first_visit) ============
       if (event != 'first_visit') {
-        return null; // Solo verificar visitas cuando se marca como visitado
+        return []; // Solo verificar visitas cuando se marca como visitado
       }
+
       // ID 1: El Principiante - 1 lugar
       if (stats['visited_count'] == 1) {
         print('🎯 Primera visita detectada, otorgando insignia...');
-        newBadge = await _awardBadge(userId, 1);
+        final badge = await _awardBadge(userId, 1);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 45: Pequeño Explorador - 2 lugares
       else if (stats['visited_count'] == 2) {
-        newBadge = await _awardBadge(userId, 45);
+        final badge = await _awardBadge(userId, 45);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 2: Explorador Novato - 5 lugares
       else if (stats['visited_count'] == 5) {
-        newBadge = await _awardBadge(userId, 2);
+        final badge = await _awardBadge(userId, 2);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 3: Viajero Frecuente - 10 lugares
       else if (stats['visited_count'] == 10) {
-        newBadge = await _awardBadge(userId, 3);
+        final badge = await _awardBadge(userId, 3);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 46: Explorador Consolidado - 15 lugares
       else if (stats['visited_count'] == 15) {
-        newBadge = await _awardBadge(userId, 46);
+        final badge = await _awardBadge(userId, 46);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 12: Conquistador de Tipos - 20 lugares
       else if (stats['visited_count'] == 20) {
-        newBadge = await _awardBadge(userId, 12);
+        final badge = await _awardBadge(userId, 12);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 4: Buscador Infatigable - 25 lugares
       else if (stats['visited_count'] == 25) {
-        newBadge = await _awardBadge(userId, 4);
+        final badge = await _awardBadge(userId, 4);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 47: Explorador Experto - 35 lugares
       else if (stats['visited_count'] == 35) {
-        newBadge = await _awardBadge(userId, 47);
+        final badge = await _awardBadge(userId, 47);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 5: Maestro Cartógrafo - 50 lugares
       else if (stats['visited_count'] == 50) {
-        newBadge = await _awardBadge(userId, 5);
+        final badge = await _awardBadge(userId, 5);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 48: Explorador Supremo - 75 lugares
       else if (stats['visited_count'] == 75) {
-        newBadge = await _awardBadge(userId, 48);
+        final badge = await _awardBadge(userId, 48);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 6: Leyenda de la Exploración - 100 lugares
       else if (stats['visited_count'] == 100) {
-        newBadge = await _awardBadge(userId, 6);
+        final badge = await _awardBadge(userId, 6);
+        if (badge != null) newBadges.add(badge);
       }
       // ID 7: Veterano - 200 lugares
       else if (stats['visited_count'] == 200) {
-        newBadge = await _awardBadge(userId, 7);
+        final badge = await _awardBadge(userId, 7);
+        if (badge != null) newBadges.add(badge);
       }
 
       // ============ LOGROS POR PUNTOS ============
@@ -130,28 +152,29 @@ class BadgeService {
       // ID 36: El Ahorrador - 500 puntos
       if (activityPoints >= 500 && activityPoints < 1000) {
         final badge = await _awardBadge(userId, 36);
-        if (badge != null) newBadge = badge;
+        if (badge != null) newBadges.add(badge);
       }
       // ID 37: El Millonario de Puntos - 1000 puntos
       else if (activityPoints >= 1000 && activityPoints < 2000) {
         final badge = await _awardBadge(userId, 37);
-        if (badge != null) newBadge = badge;
+        if (badge != null) newBadges.add(badge);
       }
       // ID 38: Coleccionista de Puntos - 2000 puntos
       else if (activityPoints >= 2000 && activityPoints < 5000) {
         final badge = await _awardBadge(userId, 38);
-        if (badge != null) newBadge = badge;
+        if (badge != null) newBadges.add(badge);
       }
       // ID 39: Acelerador de Puntos - 5000 puntos
       else if (activityPoints >= 5000) {
         final badge = await _awardBadge(userId, 39);
-        if (badge != null) newBadge = badge;
+        if (badge != null) newBadges.add(badge);
       }
 
-      return newBadge;
+      print('🎁 Total de insignias desbloqueadas: ${newBadges.length}');
+      return newBadges;
     } catch (e) {
       print('Error verificando insignias: $e');
-      return null;
+      return [];
     }
   }
 

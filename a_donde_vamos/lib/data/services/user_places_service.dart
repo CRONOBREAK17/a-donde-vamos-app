@@ -63,13 +63,13 @@ class UserPlacesService {
         'visited_at': DateTime.now().toIso8601String(),
       });
 
-      // Verificar si se debe otorgar alguna insignia
-      final badge = await _badgeService.checkAndAwardBadges(
+      // Verificar si se deben otorgar insignias
+      final badges = await _badgeService.checkAndAwardBadges(
         userId: user.id,
         event: 'first_visit',
       );
 
-      return {'success': true, 'badge': badge};
+      return {'success': true, 'badges': badges};
     } catch (e) {
       print('Error marcando como visitado: $e');
       return {'success': false};
@@ -432,12 +432,12 @@ class UserPlacesService {
 
       // Verificar logros relacionados con opiniones
       print('📝 Opinión publicada, verificando logros de opiniones...');
-      final badge = await _badgeService.checkAndAwardBadges(
+      final badges = await _badgeService.checkAndAwardBadges(
         userId: user.id,
         event: 'review_made',
       );
 
-      return {'success': true, 'badge': badge};
+      return {'success': true, 'badges': badges};
     } catch (e) {
       print('Error agregando reseña: $e');
       return {'success': false};

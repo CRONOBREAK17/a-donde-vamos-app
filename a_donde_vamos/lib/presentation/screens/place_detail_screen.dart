@@ -860,18 +860,28 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                                   'Tu opinión se ha publicado correctamente',
                             );
 
-                            // Si se otorgó un logro, mostrarlo después de 3 segundos
-                            if (result['badge'] != null) {
+                            // Si se otorgaron logros, mostrarlos secuencialmente
+                            if (result['badges'] != null &&
+                                result['badges'] is List &&
+                                (result['badges'] as List).isNotEmpty) {
+                              final badges = result['badges'] as List;
                               print(
-                                '🎊 Mostrando logro de opinión: ${result['badge']}',
+                                '🎊 Mostrando ${badges.length} logros de opinión...',
                               );
-                              await AchievementDialog.show(
-                                context: context,
-                                badgeName: result['badge']['name'],
-                                badgeDescription:
-                                    result['badge']['description'],
-                                badgeIcon: result['badge']['icon_url'],
-                              );
+
+                              // Mostrar cada insignia con delay entre ellas
+                              for (int i = 0; i < badges.length; i++) {
+                                final badge = badges[i] as Map<String, dynamic>;
+                                await AchievementDialog.show(
+                                  context: context,
+                                  badgeName: badge['name'],
+                                  badgeDescription: badge['description'],
+                                  badgeIcon: badge['icon_url'],
+                                  delay: Duration(
+                                    seconds: 3 + (i * 6),
+                                  ), // 3s para primero, +6s para cada siguiente
+                                );
+                              }
                             }
                           } else {
                             NeonAlertDialog.show(
