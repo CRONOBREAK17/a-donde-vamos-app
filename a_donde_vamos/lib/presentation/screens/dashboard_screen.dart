@@ -1,7 +1,11 @@
 // lib/presentation/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/location_service.dart';
+import '../../data/services/places_service.dart';
+import '../../data/models/location_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,12 +15,178 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final LocationService _locationService = LocationService();
+  final PlacesService _placesService = PlacesService();
+
   bool _isLoading = false;
   bool _showFilters = false;
   String _selectedType = 'restaurant';
   double _searchRadius = 3.0; // en km
   String _selectedTimeOfDay = 'anytime';
   String _selectedCompany = 'anyone';
+
+  Position? _currentPosition;
+  LocationModel? _foundPlace;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _locationError = null;
+    });
+
+    try {
+      final position = await _locationService.getCurrentLocation();
+      if (position != null) {
+        setState(() {
+          _currentPosition = position;
+        });
+      } else {
+        setState(() {
+          _locationError = 'No se pudo obtener la ubicación';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _locationError = e.toString();
+      });
+    }
+  }
+
+  Future<void> _searchRandomPlace() async {
+    if (_currentPosition == null) {
+      _showErrorDialog('Error', 'Necesitamos tu ubicación para buscar lugares');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _foundPlace = null;
+    });
+
+    try {
+      final place = await _placesService.findRandomPlace(
+        latitude: _currentPosition!.latitude,
+        longitude: _currentPosition!.longitude,
+        placeType: _selectedType,
+        radiusInKm: _searchRadius,
+      );
+
+      if (place != null) {
+        // Calcular distancia
+        final distance = _locationService.calculateDistance(
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+          place.latitude,
+          place.longitude,
+        );
+
+        setState(() {
+          _foundPlace = place;
+          _isLoading = false;
+        });
+
+        _showPlaceDialog(place, distance);
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorDialog(
+          'Sin resultados',
+          'No encontramos lugares cerca. Intenta aumentar el radio de búsqueda.',
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog('Error', 'Ocurrió un error al buscar: $e');
+    }
+  }
+
+  void _showPlaceDialog(LocationModel place, double distanceInMeters) {
+    final distanceText = _locationService.formatDistance(distanceInMeters);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          '🎉 ${place.name}',
+          style: const TextStyle(color: AppColors.primary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '📍 ${place.address}',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '📏 Distancia: $distanceText',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            if (place.rating != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                '⭐ Rating: ${place.rating!.toStringAsFixed(1)}',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+            if (place.priceLevel != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                '💰 Precio: ${place.priceDisplay}',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navegar a vista detallada
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            child: const Text('Ver más'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title, style: const TextStyle(color: AppColors.secondary)),
+        content: Text(message, style: const TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,22 +257,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLocationStatus() {
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+
+    if (_locationError != null) {
+      statusText = _locationError!;
+      statusColor = AppColors.secondary;
+      statusIcon = Icons.location_off;
+    } else if (_currentPosition != null) {
+      statusText =
+          'Ubicación obtenida (${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)})';
+      statusColor = AppColors.primary;
+      statusIcon = Icons.location_on;
+    } else {
+      statusText = 'Obteniendo ubicación...';
+      statusColor = AppColors.primary;
+      statusIcon = Icons.location_searching;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary),
+        border: Border.all(color: statusColor),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.location_on, color: AppColors.primary),
-          SizedBox(width: 12),
+          Icon(statusIcon, color: statusColor),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Ubicación actual',
                   style: TextStyle(
                     color: AppColors.textPrimary,
@@ -110,8 +299,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Text(
-                  'Obteniendo ubicación...',
-                  style: TextStyle(
+                  statusText,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -142,19 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading
-            ? null
-            : () {
-                setState(() {
-                  _isLoading = true;
-                });
-                // TODO: Buscar lugares aleatorios
-                Future.delayed(const Duration(seconds: 2), () {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                });
-              },
+        onPressed: _isLoading ? null : _searchRandomPlace,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 20),
           backgroundColor: Colors.transparent,

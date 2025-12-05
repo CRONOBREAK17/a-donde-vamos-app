@@ -7,13 +7,15 @@ class LocationModel {
   final double longitude;
   final String? description;
   final String? googleMapsUrl;
-  final double? averageRating;
+  final double? rating; // Cambiado de averageRating a rating
   final int? priceLevel;
   final String? phoneNumber;
   final String? website;
   final List<String>? openingHours;
   final bool? isOpen;
   final double? distance; // En kilómetros
+  final String? photoReference; // Para fotos de Google Places
+  final List<String>? types; // Tipos de lugar
 
   LocationModel({
     required this.id,
@@ -23,13 +25,15 @@ class LocationModel {
     required this.longitude,
     this.description,
     this.googleMapsUrl,
-    this.averageRating,
+    this.rating,
     this.priceLevel,
     this.phoneNumber,
     this.website,
     this.openingHours,
     this.isOpen,
     this.distance,
+    this.photoReference,
+    this.types,
   });
 
   factory LocationModel.fromJson(Map<String, dynamic> json) {
@@ -41,8 +45,8 @@ class LocationModel {
       longitude: (json['longitude'] as num).toDouble(),
       description: json['description'] as String?,
       googleMapsUrl: json['google_maps_url'] as String?,
-      averageRating: json['average_rating'] != null
-          ? (json['average_rating'] as num).toDouble()
+      rating: json['rating'] != null || json['average_rating'] != null
+          ? (json['rating'] ?? json['average_rating'] as num).toDouble()
           : null,
       priceLevel: json['price_level'] as int?,
       phoneNumber: json['phone_number'] as String?,
@@ -53,6 +57,10 @@ class LocationModel {
       isOpen: json['is_open'] as bool?,
       distance: json['distance'] != null
           ? (json['distance'] as num).toDouble()
+          : null,
+      photoReference: json['photo_reference'] as String?,
+      types: json['types'] != null
+          ? List<String>.from(json['types'] as List)
           : null,
     );
   }
@@ -66,13 +74,15 @@ class LocationModel {
       'longitude': longitude,
       'description': description,
       'google_maps_url': googleMapsUrl,
-      'average_rating': averageRating,
+      'rating': rating,
       'price_level': priceLevel,
       'phone_number': phoneNumber,
       'website': website,
       'opening_hours': openingHours,
       'is_open': isOpen,
       'distance': distance,
+      'photo_reference': photoReference,
+      'types': types,
     };
   }
 
