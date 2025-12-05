@@ -125,8 +125,6 @@ class _AchievementDialogState extends State<AchievementDialog>
                 return AnimatedBuilder(
                   animation: _rotateAnimation,
                   builder: (context, child) {
-                    final angle =
-                        (index * 0.785) + (_rotateAnimation.value * 6.28);
                     final distance = 120.0;
                     return Positioned(
                       left:

@@ -170,43 +170,50 @@ class _AchievementsScreenState extends State<AchievementsScreen>
   }
 
   Widget _buildSectionHeader(String title, int count) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 24,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-          ),
-          child: Text(
-            '$count',
-            style: const TextStyle(
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
               color: AppColors.primary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -247,22 +254,26 @@ class _AchievementsScreenState extends State<AchievementsScreen>
   }
 
   Widget _buildBadgesGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: widget.badges.length,
-      itemBuilder: (context, index) {
-        final badgeEntry = widget.badges[index];
-        final badge = badgeEntry['badge'] as Map<String, dynamic>;
-        final awardedAt = badgeEntry['awarded_at'] as String?;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 15,
+            mainAxisSpacing: 15,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: widget.badges.length,
+          itemBuilder: (context, index) {
+            final badgeEntry = widget.badges[index];
+            final badge = badgeEntry['badge'] as Map<String, dynamic>;
+            final awardedAt = badgeEntry['awarded_at'] as String?;
 
-        return _buildBadgeCard(badge, awardedAt, index);
+            return _buildBadgeCard(badge, awardedAt, index);
+          },
+        );
       },
     );
   }
