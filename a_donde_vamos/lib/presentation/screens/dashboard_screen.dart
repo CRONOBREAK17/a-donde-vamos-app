@@ -158,11 +158,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navegar a vista detallada
+              Navigator.pushNamed(
+                context,
+                '/place-detail',
+                arguments: {
+                  'place': place,
+                  'distance': distanceInMeters,
+                },
+              );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Ver más'),
           ),
         ],
@@ -177,7 +182,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: AppColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title, style: const TextStyle(color: AppColors.secondary)),
-        content: Text(message, style: const TextStyle(color: AppColors.textSecondary)),
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

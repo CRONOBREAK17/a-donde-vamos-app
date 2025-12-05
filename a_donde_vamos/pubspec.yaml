@@ -48,6 +48,9 @@ dependencies:
   # HTTP requests
   http: ^1.2.2
   
+  # URL launcher para abrir navegación, teléfono, web
+  url_launcher: ^6.3.1
+  
   # State management y utilidades
   provider: ^6.1.2
 

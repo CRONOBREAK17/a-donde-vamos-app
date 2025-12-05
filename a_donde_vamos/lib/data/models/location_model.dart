@@ -95,4 +95,14 @@ class LocationModel {
     if (distance == null) return 'N/A';
     return '${distance!.toStringAsFixed(2)} km';
   }
+
+  // Método para formatear distancia desde metros
+  String distanceDisplay(double distanceInMeters) {
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      double distanceInKm = distanceInMeters / 1000;
+      return '${distanceInKm.toStringAsFixed(2)} km';
+    }
+  }
 }

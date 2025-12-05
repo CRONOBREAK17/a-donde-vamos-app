@@ -37,7 +37,8 @@ class LocationService {
 
       if (permission == LocationPermission.deniedForever) {
         throw Exception(
-            'Permisos de ubicación denegados permanentemente. Por favor, habilítalos en la configuración.');
+          'Permisos de ubicación denegados permanentemente. Por favor, habilítalos en la configuración.',
+        );
       }
 
       // Obtener ubicación actual
