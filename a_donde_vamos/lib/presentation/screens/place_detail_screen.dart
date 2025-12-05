@@ -496,19 +496,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             ),
           ],
 
-          // Tipos de lugar
-          if (widget.place.types != null && widget.place.types!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              icon: Icons.category,
-              label: 'Categorías',
-              value: widget.place.types!
-                  .take(3)
-                  .map((t) => t.replaceAll('_', ' '))
-                  .join(', '),
-            ),
-          ],
-
           // Sección de opiniones
           const SizedBox(height: 24),
           const Text(
