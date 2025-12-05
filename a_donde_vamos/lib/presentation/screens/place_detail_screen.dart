@@ -704,6 +704,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     int selectedRating = 5;
     final commentController = TextEditingController();
 
+    // Capturar el contexto del scaffold ANTES de mostrar el modal
+    final scaffoldContext = context;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -841,11 +844,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                           return;
                         }
 
-                        // Guardar el contexto antes de cerrar el modal
-                        final navigator = Navigator.of(context);
-                        final scaffoldContext = context;
-
-                        navigator.pop();
+                        // Cerrar el modal (scaffoldContext ya fue capturado arriba)
+                        Navigator.of(context).pop();
 
                         final result = await _userPlacesService.addReview(
                           place: widget.place,
