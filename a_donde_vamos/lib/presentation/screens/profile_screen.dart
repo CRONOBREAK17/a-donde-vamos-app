@@ -82,6 +82,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _badges = List<Map<String, dynamic>>.from(badgesResponse);
         _descriptionController.text = _description;
       });
+
+      // Mostrar modal de premium si no es premium
+      if (!_isPremium && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showPremiumModal();
+        });
+      }
     } catch (e) {
       if (mounted) {
         _showError('Error al cargar perfil: $e');
@@ -174,6 +181,192 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showPremiumModal() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFFFD700), width: 2),
+        ),
+        title: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star, color: Colors.black, size: 30),
+              SizedBox(width: 10),
+              Text(
+                '¡Hazte Premium!',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Desbloquea todos los beneficios:',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildPremiumBenefit(
+                '🚫',
+                'Sin anuncios',
+                'Navega sin interrupciones',
+              ),
+              _buildPremiumBenefit(
+                '🔍',
+                'Búsquedas ilimitadas',
+                'Explora sin límites',
+              ),
+              _buildPremiumBenefit(
+                '🎯',
+                'Filtros avanzados',
+                'Encuentra exactamente lo que buscas',
+              ),
+              _buildPremiumBenefit(
+                '⭐',
+                'Insignia exclusiva',
+                'Destaca en la comunidad',
+              ),
+              _buildPremiumBenefit(
+                '🎧',
+                'Soporte prioritario',
+                'Ayuda cuando la necesites',
+              ),
+              _buildPremiumBenefit(
+                '🚀',
+                'Acceso anticipado',
+                'Prueba nuevas funciones primero',
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFFFD700).withOpacity(0.3),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Solo ',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      '\$4.99',
+                      style: TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      ' /mes',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Ahora no',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/premium');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              '¡Suscribirme!',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumBenefit(String emoji, String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -204,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirm == true) {
       await _supabase.auth.signOut();
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        Navigator.of(context).pushReplacementNamed('/auth');
       }
     }
   }
@@ -322,9 +515,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/premium');
-                  },
+                  onPressed: _showPremiumModal,
                   icon: const Icon(Icons.star, color: Colors.black),
                   label: const Text(
                     '⭐ Hazte Premium',
