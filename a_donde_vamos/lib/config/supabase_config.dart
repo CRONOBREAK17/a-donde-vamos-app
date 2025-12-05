@@ -4,9 +4,9 @@ class SupabaseConfig {
   // Configuración de Supabase
   static String get supabaseUrl => 'https://aukzmohxmqvgqrfporwg.supabase.co';
 
-  // NUEVA API KEY - Publishable key (desde las nuevas API keys de Supabase)
+  // Anon key actualizada (válida hasta 2035)
   static String get supabaseAnonKey =>
-      'sb_publishable_5V3rJ0rgCfs1jhPSS19o1g_7Z6cce3x';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MTMyNDQsImV4cCI6MjA2OTk4OTI0NH0.RCb9r1Ay0SzkYdJpBpb-Yi_OcD00B8ZXh50TsCNIPLw';
 
   // Secret key - NO usar en frontend, solo para referencia
   static String get serviceRoleKey =>
