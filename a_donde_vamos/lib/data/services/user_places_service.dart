@@ -1,20 +1,63 @@
 // lib/data/services/user_places_service.dart
 import '../../config/supabase_config.dart';
+import '../../data/models/location_model.dart';
 import 'supabase_service.dart';
 
 class UserPlacesService {
   final _supabase = SupabaseService.client;
 
+  // Crear o actualizar location en la tabla locations
+  Future<String?> _ensureLocationExists(LocationModel place) async {
+    try {
+      // Buscar si ya existe por Google Place ID (usando el name+address como unique)
+      final existing = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (existing != null) {
+        return existing['id'] as String;
+      }
+
+      // Crear nuevo location
+      final result = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .insert({
+            'name': place.name,
+            'address': place.address,
+            'latitude': place.latitude,
+            'longitude': place.longitude,
+            'google_maps_url': place.googleMapsUrl,
+            'average_rating': place.rating ?? 0.0,
+            'category': place.types ?? [],
+          })
+          .select('id')
+          .single();
+
+      return result['id'] as String;
+    } catch (e) {
+      print('Error creando location: $e');
+      return null;
+    }
+  }
+
   // Marcar lugar como visitado
-  Future<bool> markAsVisited(String placeId, String placeName) async {
+  Future<bool> markAsVisited(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
 
+      final locationId = await _ensureLocationExists(place);
+      if (locationId == null) return false;
+
       await _supabase.from(SupabaseConfig.visitedPlacesTable).upsert({
         'user_id': user.id,
-        'place_id': placeId,
-        'place_name': placeName,
+        'location_id': locationId,
+        'location_name': place.name,
+        'location_address': place.address,
+        'google_maps_url': place.googleMapsUrl,
         'visited_at': DateTime.now().toIso8601String(),
       });
 
@@ -26,16 +69,26 @@ class UserPlacesService {
   }
 
   // Desmarcar lugar como visitado
-  Future<bool> unmarkAsVisited(String placeId) async {
+  Future<bool> unmarkAsVisited(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
+
+      // Buscar location_id
+      final location = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (location == null) return false;
 
       await _supabase
           .from(SupabaseConfig.visitedPlacesTable)
           .delete()
           .eq('user_id', user.id)
-          .eq('place_id', placeId);
+          .eq('location_id', location['id']);
 
       return true;
     } catch (e) {
@@ -45,16 +98,25 @@ class UserPlacesService {
   }
 
   // Verificar si un lugar fue visitado
-  Future<bool> isVisited(String placeId) async {
+  Future<bool> isVisited(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
+
+      final location = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (location == null) return false;
 
       final result = await _supabase
           .from(SupabaseConfig.visitedPlacesTable)
           .select()
           .eq('user_id', user.id)
-          .eq('place_id', placeId)
+          .eq('location_id', location['id'])
           .maybeSingle();
 
       return result != null;
@@ -65,28 +127,30 @@ class UserPlacesService {
   }
 
   // Agregar a favoritos
-  Future<bool> addToFavorites(String placeId, String placeName) async {
+  Future<bool> addToFavorites(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
 
-      // Primero obtener o crear lista de favoritos del usuario
+      final locationId = await _ensureLocationExists(place);
+      if (locationId == null) return false;
+
+      // Obtener o crear lista de favoritos
       var favoriteList = await _supabase
           .from(SupabaseConfig.favoriteListsTable)
           .select('id')
           .eq('user_id', user.id)
-          .eq('name', 'Mis Favoritos')
+          .or('is_default.eq.true,name.eq.Mis Favoritos')
           .maybeSingle();
 
       String listId;
       if (favoriteList == null) {
-        // Crear lista de favoritos
         final newList = await _supabase
             .from(SupabaseConfig.favoriteListsTable)
             .insert({
               'user_id': user.id,
               'name': 'Mis Favoritos',
-              'description': 'Lugares favoritos',
+              'is_default': true,
             })
             .select('id')
             .single();
@@ -95,12 +159,19 @@ class UserPlacesService {
         listId = favoriteList['id'];
       }
 
-      // Agregar lugar a favoritos
-      await _supabase.from(SupabaseConfig.favoritePlacesTable).upsert({
+      // Agregar a favoritos con place_data como jsonb
+      await _supabase.from(SupabaseConfig.favoritePlacesTable).insert({
         'list_id': listId,
-        'place_id': placeId,
-        'place_name': placeName,
-        'added_at': DateTime.now().toIso8601String(),
+        'place_id': locationId,
+        'place_name': place.name,
+        'place_address': place.address,
+        'place_data': {
+          'google_place_id': place.id,
+          'latitude': place.latitude,
+          'longitude': place.longitude,
+          'rating': place.rating,
+          'photo_reference': place.photoReference,
+        },
       });
 
       return true;
@@ -111,17 +182,25 @@ class UserPlacesService {
   }
 
   // Quitar de favoritos
-  Future<bool> removeFromFavorites(String placeId) async {
+  Future<bool> removeFromFavorites(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
 
-      // Obtener lista de favoritos
+      final location = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (location == null) return false;
+
       final favoriteList = await _supabase
           .from(SupabaseConfig.favoriteListsTable)
           .select('id')
           .eq('user_id', user.id)
-          .eq('name', 'Mis Favoritos')
+          .or('is_default.eq.true,name.eq.Mis Favoritos')
           .maybeSingle();
 
       if (favoriteList == null) return false;
@@ -130,7 +209,7 @@ class UserPlacesService {
           .from(SupabaseConfig.favoritePlacesTable)
           .delete()
           .eq('list_id', favoriteList['id'])
-          .eq('place_id', placeId);
+          .eq('place_id', location['id']);
 
       return true;
     } catch (e) {
@@ -140,16 +219,25 @@ class UserPlacesService {
   }
 
   // Verificar si es favorito
-  Future<bool> isFavorite(String placeId) async {
+  Future<bool> isFavorite(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
+
+      final location = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (location == null) return false;
 
       final favoriteList = await _supabase
           .from(SupabaseConfig.favoriteListsTable)
           .select('id')
           .eq('user_id', user.id)
-          .eq('name', 'Mis Favoritos')
+          .or('is_default.eq.true,name.eq.Mis Favoritos')
           .maybeSingle();
 
       if (favoriteList == null) return false;
@@ -158,7 +246,7 @@ class UserPlacesService {
           .from(SupabaseConfig.favoritePlacesTable)
           .select()
           .eq('list_id', favoriteList['id'])
-          .eq('place_id', placeId)
+          .eq('place_id', location['id'])
           .maybeSingle();
 
       return result != null;
@@ -168,16 +256,15 @@ class UserPlacesService {
     }
   }
 
-  // Bloquear lugar
-  Future<bool> blockPlace(String placeId, String placeName) async {
+  // Bloquear lugar (usa location_id text para Google Place ID)
+  Future<bool> blockPlace(String googlePlaceId) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
 
       await _supabase.from(SupabaseConfig.blockedLocationsTable).upsert({
         'user_id': user.id,
-        'place_id': placeId,
-        'place_name': placeName,
+        'location_id': googlePlaceId,
         'blocked_at': DateTime.now().toIso8601String(),
       });
 
@@ -189,7 +276,7 @@ class UserPlacesService {
   }
 
   // Desbloquear lugar
-  Future<bool> unblockPlace(String placeId) async {
+  Future<bool> unblockPlace(String googlePlaceId) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
@@ -198,7 +285,7 @@ class UserPlacesService {
           .from(SupabaseConfig.blockedLocationsTable)
           .delete()
           .eq('user_id', user.id)
-          .eq('place_id', placeId);
+          .eq('location_id', googlePlaceId);
 
       return true;
     } catch (e) {
@@ -208,7 +295,7 @@ class UserPlacesService {
   }
 
   // Verificar si está bloqueado
-  Future<bool> isBlocked(String placeId) async {
+  Future<bool> isBlocked(String googlePlaceId) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
@@ -217,7 +304,7 @@ class UserPlacesService {
           .from(SupabaseConfig.blockedLocationsTable)
           .select()
           .eq('user_id', user.id)
-          .eq('place_id', placeId)
+          .eq('location_id', googlePlaceId)
           .maybeSingle();
 
       return result != null;
@@ -227,19 +314,31 @@ class UserPlacesService {
     }
   }
 
-  // Obtener reseñas de un lugar
-  Future<List<Map<String, dynamic>>> getPlaceReviews(String placeId) async {
+  // Obtener reseñas de un lugar (de la tabla reviews)
+  Future<List<Map<String, dynamic>>> getPlaceReviews(
+    LocationModel place,
+  ) async {
     try {
+      final location = await _supabase
+          .from(SupabaseConfig.locationsTable)
+          .select('id')
+          .eq('name', place.name)
+          .eq('address', place.address)
+          .maybeSingle();
+
+      if (location == null) return [];
+
       final result = await _supabase
-          .from('place_reviews')
+          .from(SupabaseConfig.reviewsTable)
           .select('''
             *,
             users:user_id (
               username,
+              name,
               profile_picture
             )
           ''')
-          .eq('place_id', placeId)
+          .eq('location_id', location['id'])
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(result);
@@ -251,8 +350,7 @@ class UserPlacesService {
 
   // Agregar reseña
   Future<bool> addReview({
-    required String placeId,
-    required String placeName,
+    required LocationModel place,
     required int rating,
     required String comment,
   }) async {
@@ -260,13 +358,14 @@ class UserPlacesService {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
 
-      await _supabase.from('place_reviews').insert({
+      final locationId = await _ensureLocationExists(place);
+      if (locationId == null) return false;
+
+      await _supabase.from(SupabaseConfig.reviewsTable).insert({
         'user_id': user.id,
-        'place_id': placeId,
-        'place_name': placeName,
+        'location_id': locationId,
         'rating': rating,
         'comment': comment,
-        'created_at': DateTime.now().toIso8601String(),
       });
 
       return true;

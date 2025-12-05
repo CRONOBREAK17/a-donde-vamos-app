@@ -2,6 +2,14 @@
 
 Aplicación móvil Android nativa para descubrir lugares aleatorios cerca de ti (restaurantes, cafés, bares).
 
+## 🚨 ERROR COMÚN: "Invalid API key" en Login
+
+Si ves el error **"AuthApiException: Invalid API key, statusCode: 401"**:
+
+➡️ **Solución completa en**: [`FIX_INVALID_API_KEY.md`](FIX_INVALID_API_KEY.md)
+
+**Resumen**: Necesitas copiar la API key correcta desde tu [Supabase Dashboard](https://supabase.com/dashboard) → Settings → API → **anon/public key** y pegarla en `lib/config/supabase_config.dart`.
+
 ## 🎉 Nuevas Funcionalidades Implementadas
 
 **Ver**: [`QUICK_START.md`](QUICK_START.md) para instrucciones de uso inmediatas

@@ -40,8 +40,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<void> _loadPlaceStatus() async {
     try {
       final results = await Future.wait([
-        _userPlacesService.isFavorite(widget.place.id),
-        _userPlacesService.isVisited(widget.place.id),
+        _userPlacesService.isFavorite(widget.place),
+        _userPlacesService.isVisited(widget.place),
         _userPlacesService.isBlocked(widget.place.id),
       ]);
 
@@ -59,7 +59,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
   Future<void> _loadReviews() async {
     try {
-      final reviews = await _userPlacesService.getPlaceReviews(widget.place.id);
+      final reviews = await _userPlacesService.getPlaceReviews(widget.place);
       if (mounted) {
         setState(() => _reviews = reviews);
       }
@@ -603,7 +603,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Widget _buildReviewCard(Map<String, dynamic> review) {
     final rating = review['rating'] as int? ?? 0;
     final comment = review['comment'] as String? ?? '';
-    final username = review['users']?['username'] as String? ?? 'Usuario';
+    final userInfo = review['users'] as Map<String, dynamic>?;
+    final username =
+        userInfo?['username'] as String? ??
+        userInfo?['name'] as String? ??
+        'Usuario';
     final createdAt = DateTime.tryParse(review['created_at'] ?? '');
 
     return Container(
@@ -841,8 +845,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                         Navigator.pop(context);
 
                         final success = await _userPlacesService.addReview(
-                          placeId: widget.place.id,
-                          placeName: widget.place.name,
+                          place: widget.place,
                           rating: selectedRating,
                           comment: commentController.text.trim(),
                         );
@@ -993,12 +996,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
     bool success;
     if (newState) {
-      success = await _userPlacesService.addToFavorites(
-        widget.place.id,
-        widget.place.name,
-      );
+      success = await _userPlacesService.addToFavorites(widget.place);
     } else {
-      success = await _userPlacesService.removeFromFavorites(widget.place.id);
+      success = await _userPlacesService.removeFromFavorites(widget.place);
     }
 
     if (mounted) {
@@ -1030,12 +1030,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
     bool success;
     if (newState) {
-      success = await _userPlacesService.markAsVisited(
-        widget.place.id,
-        widget.place.name,
-      );
+      success = await _userPlacesService.markAsVisited(widget.place);
     } else {
-      success = await _userPlacesService.unmarkAsVisited(widget.place.id);
+      success = await _userPlacesService.unmarkAsVisited(widget.place);
     }
 
     if (mounted) {
@@ -1067,10 +1064,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
     bool success;
     if (newState) {
-      success = await _userPlacesService.blockPlace(
-        widget.place.id,
-        widget.place.name,
-      );
+      success = await _userPlacesService.blockPlace(widget.place.id);
     } else {
       success = await _userPlacesService.unblockPlace(widget.place.id);
     }
