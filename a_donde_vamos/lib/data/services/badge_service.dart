@@ -72,25 +72,25 @@ class BadgeService {
       }
 
       // ============ LOGROS POR PUNTOS ============
+      final activityPoints = stats['activity_points'] ?? 0;
+
       // ID 36: El Ahorrador - 500 puntos
-      if (stats['activity_points'] >= 500 && stats['activity_points'] < 1000) {
+      if (activityPoints >= 500 && activityPoints < 1000) {
         final badge = await _awardBadge(userId, 36);
         if (badge != null) newBadge = badge;
       }
       // ID 37: El Millonario de Puntos - 1000 puntos
-      else if (stats['activity_points'] >= 1000 &&
-          stats['activity_points'] < 2000) {
+      else if (activityPoints >= 1000 && activityPoints < 2000) {
         final badge = await _awardBadge(userId, 37);
         if (badge != null) newBadge = badge;
       }
       // ID 38: Coleccionista de Puntos - 2000 puntos
-      else if (stats['activity_points'] >= 2000 &&
-          stats['activity_points'] < 5000) {
+      else if (activityPoints >= 2000 && activityPoints < 5000) {
         final badge = await _awardBadge(userId, 38);
         if (badge != null) newBadge = badge;
       }
       // ID 39: Acelerador de Puntos - 5000 puntos
-      else if (stats['activity_points'] >= 5000) {
+      else if (activityPoints >= 5000) {
         final badge = await _awardBadge(userId, 39);
         if (badge != null) newBadge = badge;
       }
