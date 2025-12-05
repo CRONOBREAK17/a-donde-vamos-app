@@ -322,6 +322,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.settings, size: 26),
+          onPressed: () {
+            Navigator.pushNamed(context, '/settings');
+          },
+          tooltip: 'Ajustes',
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
