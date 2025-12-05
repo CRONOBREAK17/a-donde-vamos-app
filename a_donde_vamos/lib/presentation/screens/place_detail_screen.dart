@@ -841,7 +841,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                           return;
                         }
 
-                        Navigator.pop(context);
+                        // Guardar el contexto antes de cerrar el modal
+                        final navigator = Navigator.of(context);
+                        final scaffoldContext = context;
+
+                        navigator.pop();
 
                         final result = await _userPlacesService.addReview(
                           place: widget.place,
@@ -849,48 +853,54 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                           comment: commentController.text.trim(),
                         );
 
-                        if (mounted) {
-                          if (result['success'] == true) {
-                            await _loadReviews();
-                            NeonAlertDialog.show(
-                              context: context,
-                              icon: Icons.check_circle,
-                              title: '¡Gracias!',
-                              message:
-                                  'Tu opinión se ha publicado correctamente',
+                        if (!mounted) return;
+
+                        if (result['success'] == true) {
+                          await _loadReviews();
+
+                          if (!mounted) return;
+
+                          NeonAlertDialog.show(
+                            context: scaffoldContext,
+                            icon: Icons.check_circle,
+                            title: '¡Gracias!',
+                            message: 'Tu opinión se ha publicado correctamente',
+                          );
+
+                          // Si se otorgaron logros, mostrarlos secuencialmente
+                          if (result['badges'] != null &&
+                              result['badges'] is List &&
+                              (result['badges'] as List).isNotEmpty) {
+                            final badges = result['badges'] as List;
+                            print(
+                              '🎊 Mostrando ${badges.length} logros de opinión...',
                             );
 
-                            // Si se otorgaron logros, mostrarlos secuencialmente
-                            if (result['badges'] != null &&
-                                result['badges'] is List &&
-                                (result['badges'] as List).isNotEmpty) {
-                              final badges = result['badges'] as List;
-                              print(
-                                '🎊 Mostrando ${badges.length} logros de opinión...',
+                            // Mostrar cada insignia con delay entre ellas
+                            for (int i = 0; i < badges.length; i++) {
+                              if (!mounted) break;
+
+                              final badge = badges[i] as Map<String, dynamic>;
+                              await AchievementDialog.show(
+                                context: scaffoldContext,
+                                badgeName: badge['name'],
+                                badgeDescription: badge['description'],
+                                badgeIcon: badge['icon_url'],
+                                delay: Duration(
+                                  seconds: 3 + (i * 6),
+                                ), // 3s para primero, +6s para cada siguiente
                               );
-
-                              // Mostrar cada insignia con delay entre ellas
-                              for (int i = 0; i < badges.length; i++) {
-                                final badge = badges[i] as Map<String, dynamic>;
-                                await AchievementDialog.show(
-                                  context: context,
-                                  badgeName: badge['name'],
-                                  badgeDescription: badge['description'],
-                                  badgeIcon: badge['icon_url'],
-                                  delay: Duration(
-                                    seconds: 3 + (i * 6),
-                                  ), // 3s para primero, +6s para cada siguiente
-                                );
-                              }
                             }
-                          } else {
-                            NeonAlertDialog.show(
-                              context: context,
-                              icon: Icons.error_outline,
-                              title: 'Error',
-                              message: 'No se pudo publicar tu opinión',
-                            );
                           }
+                        } else {
+                          if (!mounted) return;
+
+                          NeonAlertDialog.show(
+                            context: scaffoldContext,
+                            icon: Icons.error_outline,
+                            title: 'Error',
+                            message: 'No se pudo publicar tu opinión',
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(
