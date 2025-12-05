@@ -48,8 +48,14 @@ dependencies:
   # HTTP requests
   http: ^1.2.2
   
+  # Image picker para subir fotos de perfil
+  image_picker: ^1.1.2
+  
   # URL launcher para abrir navegación, teléfono, web
   url_launcher: ^6.3.1
+  
+  # Formateo de fechas (DateFormat)
+  intl: ^0.19.0
   
   # State management y utilidades
   provider: ^6.1.2
