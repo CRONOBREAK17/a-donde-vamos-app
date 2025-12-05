@@ -4,4 +4,11 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <application>
+        <!-- Google Maps API Key para debug -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyB8qeOmj_KuX_OMtJ__MDtC-PL9hk6voDM" />
+    </application>
 </manifest>
