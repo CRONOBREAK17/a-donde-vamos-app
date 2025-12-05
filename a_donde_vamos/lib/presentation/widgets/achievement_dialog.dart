@@ -15,6 +15,28 @@ class AchievementDialog extends StatefulWidget {
     this.badgeIcon,
   });
 
+  /// Muestra el diálogo de logro con delay de 3 segundos
+  static Future<void> show({
+    required BuildContext context,
+    required String badgeName,
+    required String badgeDescription,
+    String? badgeIcon,
+    Duration delay = const Duration(seconds: 3),
+  }) async {
+    await Future.delayed(delay);
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AchievementDialog(
+          badgeName: badgeName,
+          badgeDescription: badgeDescription,
+          badgeIcon: badgeIcon,
+        ),
+      );
+    }
+  }
+
   @override
   State<AchievementDialog> createState() => _AchievementDialogState();
 }
@@ -233,27 +255,5 @@ class _AchievementDialogState extends State<AchievementDialog>
         ),
       ),
     );
-  }
-
-  /// Muestra el diálogo de logro con delay de 3 segundos
-  static Future<void> show({
-    required BuildContext context,
-    required String badgeName,
-    required String badgeDescription,
-    String? badgeIcon,
-    Duration delay = const Duration(seconds: 3),
-  }) async {
-    await Future.delayed(delay);
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AchievementDialog(
-          badgeName: badgeName,
-          badgeDescription: badgeDescription,
-          badgeIcon: badgeIcon,
-        ),
-      );
-    }
   }
 }
