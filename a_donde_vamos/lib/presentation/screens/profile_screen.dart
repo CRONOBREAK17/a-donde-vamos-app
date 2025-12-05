@@ -7,6 +7,7 @@ import '../../core/utils/rank_utils.dart';
 import '../widgets/rank_profile_picture.dart';
 import '../widgets/neon_alert_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
+import 'achievements_screen.dart';
 import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
@@ -723,87 +724,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 30),
 
-            // Sección de insignias
+            // Botón para ver logros
             Container(
-              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              height: 120,
               decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '🎖️ Insignias Obtenidas (${_badges.length})',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.3),
+                    AppColors.secondary.withOpacity(0.3),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.5),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 15,
+                    spreadRadius: 2,
                   ),
-                  const SizedBox(height: 15),
-                  if (_badges.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Text(
-                          '¡Aún no has ganado insignias!\nVisita tu primer lugar para empezar 🚀',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textMuted),
-                        ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            AchievementsScreen(
+                              badges: _badges,
+                              activityPoints: _activityPoints,
+                            ),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(1.0, 0.0);
+                              const end = Offset.zero;
+                              const curve = Curves.easeInOut;
+
+                              var tween = Tween(
+                                begin: begin,
+                                end: end,
+                              ).chain(CurveTween(curve: curve));
+                              var offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
                       ),
-                    )
-                  else
-                    Wrap(
-                      spacing: 15,
-                      runSpacing: 15,
-                      children: _badges.map((badgeEntry) {
-                        final badge =
-                            badgeEntry['badge'] as Map<String, dynamic>;
-                        return Container(
-                          width: 100,
-                          padding: const EdgeInsets.all(10),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        // Icono animado
+                        Container(
+                          width: 70,
+                          height: 70,
                           decoration: BoxDecoration(
-                            color: Colors.grey[850],
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.grey[700]!),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                badge['icon_url'] ?? '🌟',
-                                style: const TextStyle(fontSize: 32),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                badge['name'] ?? '',
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                badge['criteria'] ?? '',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 9,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFFFFD700),
+                                const Color(0xFFFF8C00),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFD700).withOpacity(0.4),
+                                blurRadius: 15,
+                                spreadRadius: 3,
                               ),
                             ],
                           ),
-                        );
-                      }).toList(),
+                          child: const Icon(
+                            Icons.emoji_events,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // Texto
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                '🏆 Ver Mis Logros',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                '${_badges.length} ${_badges.length == 1 ? "logro desbloqueado" : "logros desbloqueados"}',
+                                style: TextStyle(
+                                  color: AppColors.textMuted.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Flecha
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: AppColors.primary.withOpacity(0.7),
+                          size: 24,
+                        ),
+                      ],
                     ),
-                ],
+                  ),
+                ),
               ),
             ),
 
