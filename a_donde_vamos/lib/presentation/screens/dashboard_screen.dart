@@ -14,6 +14,7 @@ import '../../data/services/ad_service.dart';
 import '../../data/models/location_model.dart';
 import '../widgets/neon_alert_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
+import '../widgets/achievement_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -176,9 +177,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _markPlaceAsVisited() async {
     if (_persistentPlace == null) return;
 
-    final success = await _userPlacesService.markAsVisited(_persistentPlace!);
+    final result = await _userPlacesService.markAsVisited(_persistentPlace!);
 
-    if (success) {
+    if (result['success'] == true) {
       // Borrar del almacenamiento persistente
       await _clearPersistentPlace();
 
@@ -195,6 +196,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           message: 'Se agregó a tu historial correctamente',
           isSuccess: true,
         );
+
+        // Mostrar logro si se desbloqueó alguno
+        if (result['badge'] != null) {
+          final badge = result['badge'] as Map<String, dynamic>;
+          AchievementDialog.show(
+            context: context,
+            badgeName: badge['name'] ?? 'Nuevo logro',
+            badgeDescription: badge['description'] ?? '',
+            badgeIcon: badge['icon_url'],
+          );
+        }
       }
     } else {
       if (mounted) {

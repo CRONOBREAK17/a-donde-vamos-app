@@ -81,30 +81,44 @@ class _RankProfilePictureState extends State<RankProfilePicture>
                 _buildExploradorElite(rankInfo),
             ],
 
-            // Foto de perfil con borde pulsante
+            // Foto de perfil con borde pulsante mejorado
             AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
+                final pulseValue = _pulseController.value;
                 return Container(
                   width: widget.size,
                   height: widget.size,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: rankInfo.color, width: 4),
+                    border: Border.all(
+                      color: rankInfo.color,
+                      width: 4 + (pulseValue * 2),
+                    ),
                     boxShadow: [
+                      // Resplandor exterior intenso
                       BoxShadow(
                         color: rankInfo.color.withOpacity(
-                          0.5 + (_pulseController.value * 0.3),
+                          0.6 + (pulseValue * 0.4),
                         ),
-                        blurRadius: 15 + (_pulseController.value * 10),
-                        spreadRadius: 2 + (_pulseController.value * 3),
+                        blurRadius: 25 + (pulseValue * 15),
+                        spreadRadius: 5 + (pulseValue * 5),
                       ),
+                      // Resplandor medio
                       BoxShadow(
                         color: rankInfo.color.withOpacity(
-                          0.2 + (_pulseController.value * 0.3),
+                          0.4 + (pulseValue * 0.3),
                         ),
-                        blurRadius: 5 + (_pulseController.value * 5),
-                        spreadRadius: 0,
+                        blurRadius: 15 + (pulseValue * 10),
+                        spreadRadius: 3 + (pulseValue * 3),
+                      ),
+                      // Resplandor cercano
+                      BoxShadow(
+                        color: rankInfo.color.withOpacity(
+                          0.3 + (pulseValue * 0.4),
+                        ),
+                        blurRadius: 8 + (pulseValue * 6),
+                        spreadRadius: 1 + (pulseValue * 2),
                       ),
                     ],
                   ),

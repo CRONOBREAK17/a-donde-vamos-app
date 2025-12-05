@@ -7,6 +7,7 @@ import '../../data/models/location_model.dart';
 import '../../data/services/places_service.dart';
 import '../../data/services/user_places_service.dart';
 import '../widgets/neon_alert_dialog.dart';
+import '../widgets/achievement_dialog.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final LocationModel place;
@@ -1135,12 +1136,14 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
     setState(() => _isVisited = newState);
 
-    bool success;
+    dynamic result;
     if (newState) {
-      success = await _userPlacesService.markAsVisited(widget.place);
+      result = await _userPlacesService.markAsVisited(widget.place);
     } else {
-      success = await _userPlacesService.unmarkAsVisited(widget.place);
+      result = await _userPlacesService.unmarkAsVisited(widget.place);
     }
+
+    final success = newState ? result['success'] == true : result == true;
 
     if (mounted) {
       if (success) {
@@ -1152,6 +1155,17 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               ? 'Agregamos ${widget.place.name} a tu historial'
               : '${widget.place.name} se eliminó del historial',
         );
+
+        // Mostrar logro si se desbloqueó alguno
+        if (newState && result['badge'] != null) {
+          final badge = result['badge'] as Map<String, dynamic>;
+          AchievementDialog.show(
+            context: context,
+            badgeName: badge['name'] ?? 'Nuevo logro',
+            badgeDescription: badge['description'] ?? '',
+            badgeIcon: badge['icon_url'],
+          );
+        }
       } else {
         setState(() => _isVisited = !newState);
         NeonAlertDialog.show(

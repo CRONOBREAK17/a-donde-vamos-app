@@ -2,9 +2,11 @@
 import '../../config/supabase_config.dart';
 import '../../data/models/location_model.dart';
 import 'supabase_service.dart';
+import 'badge_service.dart';
 
 class UserPlacesService {
   final _supabase = SupabaseService.client;
+  final _badgeService = BadgeService();
 
   // Crear o actualizar location en la tabla locations
   Future<String?> _ensureLocationExists(LocationModel place) async {
@@ -44,13 +46,13 @@ class UserPlacesService {
   }
 
   // Marcar lugar como visitado
-  Future<bool> markAsVisited(LocationModel place) async {
+  Future<Map<String, dynamic>> markAsVisited(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) return false;
+      if (user == null) return {'success': false};
 
       final locationId = await _ensureLocationExists(place);
-      if (locationId == null) return false;
+      if (locationId == null) return {'success': false};
 
       await _supabase.from(SupabaseConfig.visitedPlacesTable).upsert({
         'user_id': user.id,
@@ -61,10 +63,16 @@ class UserPlacesService {
         'visited_at': DateTime.now().toIso8601String(),
       });
 
-      return true;
+      // Verificar si se debe otorgar alguna insignia
+      final badge = await _badgeService.checkAndAwardBadges(
+        userId: user.id,
+        event: 'first_visit',
+      );
+
+      return {'success': true, 'badge': badge};
     } catch (e) {
       print('Error marcando como visitado: $e');
-      return false;
+      return {'success': false};
     }
   }
 
