@@ -65,8 +65,8 @@ class _AchievementDialogState extends State<AchievementDialog>
       end: 0.8,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
+    // Solo ejecutar la animación una vez, sin repetir
     _controller.forward();
-    _controller.repeat(reverse: true);
   }
 
   @override
@@ -81,177 +81,168 @@ class _AchievementDialogState extends State<AchievementDialog>
       scale: _scaleAnimation,
       child: Dialog(
         backgroundColor: Colors.transparent,
-        child: AnimatedBuilder(
-          animation: _glowAnimation,
-          builder: (context, child) {
-            return Container(
-              padding: const EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: AppColors.primary, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(_glowAnimation.value),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                  BoxShadow(
-                    color: Colors.purple.withOpacity(
-                      _glowAnimation.value * 0.5,
-                    ),
-                    blurRadius: 20,
-                    spreadRadius: 3,
-                  ),
-                ],
+        child: Container(
+          padding: const EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: AppColors.primary, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.6),
+                blurRadius: 30,
+                spreadRadius: 5,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Título
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+              BoxShadow(
+                color: Colors.purple.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Título
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, Colors.purple],
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.5),
+                      blurRadius: 15,
+                      spreadRadius: 2,
                     ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary, Colors.purple],
+                  ],
+                ),
+                child: const Text(
+                  '🎉 ¡LOGRO DESBLOQUEADO! 🎉',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Icono del logro
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.3),
+                      AppColors.cardBackground,
+                    ],
+                  ),
+                  border: Border.all(color: AppColors.primary, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(
+                        _glowAnimation.value,
                       ),
+                      blurRadius: 20,
+                      spreadRadius: 3,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: widget.badgeIcon != null
+                      ? Image.network(
+                          widget.badgeIcon!,
+                          width: 60,
+                          height: 60,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.emoji_events,
+                                size: 60,
+                                color: AppColors.primary,
+                              ),
+                        )
+                      : const Icon(
+                          Icons.emoji_events,
+                          size: 60,
+                          color: AppColors.primary,
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Nombre del logro
+              Text(
+                widget.badgeName,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 12),
+
+              // Descripción
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                ),
+                child: Text(
+                  widget.badgeDescription,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Botón de cerrar
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.5),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        ),
-                      ],
                     ),
-                    child: const Text(
-                      '🎉 ¡LOGRO DESBLOQUEADO! 🎉',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    elevation: 5,
+                    shadowColor: AppColors.primary.withOpacity(0.5),
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // Icono del logro
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.primary.withOpacity(0.3),
-                          AppColors.cardBackground,
-                        ],
-                      ),
-                      border: Border.all(color: AppColors.primary, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(
-                            _glowAnimation.value,
-                          ),
-                          blurRadius: 20,
-                          spreadRadius: 3,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: widget.badgeIcon != null
-                          ? Image.network(
-                              widget.badgeIcon!,
-                              width: 60,
-                              height: 60,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(
-                                    Icons.emoji_events,
-                                    size: 60,
-                                    color: AppColors.primary,
-                                  ),
-                            )
-                          : const Icon(
-                              Icons.emoji_events,
-                              size: 60,
-                              color: AppColors.primary,
-                            ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Nombre del logro
-                  Text(
-                    widget.badgeName,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
+                  child: const Text(
+                    '¡Genial!',
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Descripción
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Text(
-                      widget.badgeDescription,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
+                      letterSpacing: 1,
                     ),
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // Botón de cerrar
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 5,
-                        shadowColor: AppColors.primary.withOpacity(0.5),
-                      ),
-                      child: const Text(
-                        '¡Genial!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );

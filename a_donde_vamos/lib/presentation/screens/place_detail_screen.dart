@@ -843,14 +843,14 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
                         Navigator.pop(context);
 
-                        final success = await _userPlacesService.addReview(
+                        final result = await _userPlacesService.addReview(
                           place: widget.place,
                           rating: selectedRating,
                           comment: commentController.text.trim(),
                         );
 
                         if (mounted) {
-                          if (success) {
+                          if (result['success'] == true) {
                             await _loadReviews();
                             NeonAlertDialog.show(
                               context: context,
@@ -859,6 +859,20 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                               message:
                                   'Tu opinión se ha publicado correctamente',
                             );
+
+                            // Si se otorgó un logro, mostrarlo después de 3 segundos
+                            if (result['badge'] != null) {
+                              print(
+                                '🎊 Mostrando logro de opinión: ${result['badge']}',
+                              );
+                              await AchievementDialog.show(
+                                context: context,
+                                badgeName: result['badge']['name'],
+                                badgeDescription:
+                                    result['badge']['description'],
+                                badgeIcon: result['badge']['icon_url'],
+                              );
+                            }
                           } else {
                             NeonAlertDialog.show(
                               context: context,

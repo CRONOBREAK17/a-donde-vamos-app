@@ -411,17 +411,17 @@ class UserPlacesService {
   }
 
   // Agregar reseña
-  Future<bool> addReview({
+  Future<Map<String, dynamic>> addReview({
     required LocationModel place,
     required int rating,
     required String comment,
   }) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) return false;
+      if (user == null) return {'success': false};
 
       final locationId = await _ensureLocationExists(place);
-      if (locationId == null) return false;
+      if (locationId == null) return {'success': false};
 
       await _supabase.from(SupabaseConfig.reviewsTable).insert({
         'user_id': user.id,
@@ -430,10 +430,17 @@ class UserPlacesService {
         'comment': comment,
       });
 
-      return true;
+      // Verificar logros relacionados con opiniones
+      print('📝 Opinión publicada, verificando logros de opiniones...');
+      final badge = await _badgeService.checkAndAwardBadges(
+        userId: user.id,
+        event: 'review_made',
+      );
+
+      return {'success': true, 'badge': badge};
     } catch (e) {
       print('Error agregando reseña: $e');
-      return false;
+      return {'success': false};
     }
   }
 }

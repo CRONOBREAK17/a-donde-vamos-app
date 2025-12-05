@@ -7,6 +7,13 @@ class BadgeService {
   final _supabase = Supabase.instance.client;
 
   /// Verifica y otorga insignias basadas en la actividad del usuario
+  ///
+  /// [event] puede ser:
+  /// - 'first_visit': cuando marca un lugar como visitado
+  /// - 'review_made': después de escribir una opinión
+  /// - 'vote_made': después de dar like a una opinión
+  /// - 'profile_update': al actualizar biografía/foto
+  /// - 'block_made': al bloquear un lugar
   Future<Map<String, dynamic>?> checkAndAwardBadges({
     required String userId,
     String? event,
@@ -20,7 +27,53 @@ class BadgeService {
       // Lista de insignias a verificar
       Map<String, dynamic>? newBadge;
 
-      // ============ LOGROS POR VISITAS ============
+      // ============ LOGROS POR OPINIONES (CONTEXT: review_made) ============
+      if (event == 'review_made') {
+        // Contar total de opiniones del usuario
+        final reviewsResponse = await _supabase
+            .from('reviews')
+            .select()
+            .eq('user_id', userId);
+
+        final reviewCount = reviewsResponse.length;
+        print('📝 Total de opiniones: $reviewCount');
+
+        // ID 13: Primer Comentario - 1 opinión
+        if (reviewCount == 1) {
+          newBadge = await _awardBadge(userId, 13);
+        }
+        // ID 49: Comentarista - 2 opiniones
+        else if (reviewCount == 2) {
+          newBadge = await _awardBadge(userId, 49);
+        }
+        // ID 14: Autor Prolífico - 5 opiniones
+        else if (reviewCount == 5) {
+          newBadge = await _awardBadge(userId, 14);
+        }
+        // ID 50: Crítico Regular - 10 opiniones
+        else if (reviewCount == 10) {
+          newBadge = await _awardBadge(userId, 50);
+        }
+        // ID 15: Crítico Dedicado - 15 opiniones
+        else if (reviewCount == 15) {
+          newBadge = await _awardBadge(userId, 15);
+        }
+        // ID 51: Crítico Feroz - 25 opiniones
+        else if (reviewCount == 25) {
+          newBadge = await _awardBadge(userId, 51);
+        }
+        // ID 16: Crítico Experto - 30 opiniones
+        else if (reviewCount == 30) {
+          newBadge = await _awardBadge(userId, 16);
+        }
+
+        return newBadge;
+      }
+
+      // ============ LOGROS POR VISITAS (CONTEXT: first_visit) ============
+      if (event != 'first_visit') {
+        return null; // Solo verificar visitas cuando se marca como visitado
+      }
       // ID 1: El Principiante - 1 lugar
       if (stats['visited_count'] == 1) {
         print('🎯 Primera visita detectada, otorgando insignia...');
