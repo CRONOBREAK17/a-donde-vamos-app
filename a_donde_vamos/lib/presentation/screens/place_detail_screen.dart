@@ -383,7 +383,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               // Botón "Ya visité"
               Expanded(
                 child: _buildSecondaryButton(
-                  icon: _isVisited ? Icons.check_circle : Icons.check_circle_outline,
+                  icon: _isVisited
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
                   label: 'Ya visité',
                   onPressed: _toggleVisited,
                   color: _isVisited ? Colors.green : null,
@@ -408,7 +410,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             icon: Icon(_isBlocked ? Icons.block : Icons.visibility_off),
             label: Text(_isBlocked ? 'Lugar bloqueado' : 'No recomendar más'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: _isBlocked ? Colors.red : AppColors.textSecondary,
+              foregroundColor: _isBlocked
+                  ? Colors.red
+                  : AppColors.textSecondary,
               side: BorderSide(
                 color: _isBlocked ? Colors.red : AppColors.textSecondary,
               ),
@@ -431,10 +435,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       icon: Icon(icon, size: 20, color: color ?? AppColors.primary),
       label: Text(
         label,
-        style: TextStyle(
-          fontSize: 12,
-          color: color ?? AppColors.primary,
-        ),
+        style: TextStyle(fontSize: 12, color: color ?? AppColors.primary),
       ),
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: color ?? AppColors.primary),
@@ -538,8 +539,10 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.chat_bubble_outline,
-                  color: AppColors.textSecondary),
+              const Icon(
+                Icons.chat_bubble_outline,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Aún no hay opiniones de este lugar',
@@ -680,9 +683,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _isVisited
-              ? '✅ Marcado como visitado'
-              : 'Desmarcado como visitado',
+          _isVisited ? '✅ Marcado como visitado' : 'Desmarcado como visitado',
         ),
         duration: const Duration(seconds: 2),
       ),
