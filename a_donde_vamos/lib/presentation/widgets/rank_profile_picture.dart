@@ -94,9 +94,9 @@ class _RankProfilePictureState extends State<RankProfilePicture>
                     boxShadow: [
                       BoxShadow(
                         color: rankInfo.color.withOpacity(
-                          0.3 + (_pulseController.value * 0.4),
+                          0.5 + (_pulseController.value * 0.3),
                         ),
-                        blurRadius: 10 + (_pulseController.value * 10),
+                        blurRadius: 15 + (_pulseController.value * 10),
                         spreadRadius: 2 + (_pulseController.value * 3),
                       ),
                       BoxShadow(
@@ -105,7 +105,6 @@ class _RankProfilePictureState extends State<RankProfilePicture>
                         ),
                         blurRadius: 5 + (_pulseController.value * 5),
                         spreadRadius: 0,
-                        inset: true,
                       ),
                     ],
                   ),
