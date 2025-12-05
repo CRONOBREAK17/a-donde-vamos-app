@@ -1,7 +1,9 @@
 // lib/presentation/screens/dashboard_screen.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/services/location_service.dart';
@@ -39,6 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     // Obtener ubicación en segundo plano sin bloquear el UI
     Future.microtask(() => _getCurrentLocation());
+    // Cargar sitio persistente si existe
+    _loadPersistentPlace();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -97,7 +101,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           place.longitude,
         );
 
-        // Guardar sitio de forma persistente
+        // Guardar sitio de forma persistente (en memoria y SharedPreferences)
+        await _savePersistentPlace(place, distance);
+
         setState(() {
           _persistentPlace = place;
           _persistentDistance = distance;
@@ -126,6 +132,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final success = await _userPlacesService.markAsVisited(_persistentPlace!);
 
     if (success) {
+      // Borrar del almacenamiento persistente
+      await _clearPersistentPlace();
+
       setState(() {
         _persistentPlace = null;
         _persistentDistance = null;
@@ -149,6 +158,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
           message: 'No se pudo marcar como visitado',
         );
       }
+    }
+  }
+
+  // Guardar lugar persistente en SharedPreferences
+  Future<void> _savePersistentPlace(
+    LocationModel place,
+    double distance,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final placeJson = place.toJson();
+      await prefs.setString('persistent_place', jsonEncode(placeJson));
+      await prefs.setDouble('persistent_distance', distance);
+    } catch (e) {
+      debugPrint('Error guardando lugar persistente: $e');
+    }
+  }
+
+  // Cargar lugar persistente de SharedPreferences
+  Future<void> _loadPersistentPlace() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final placeString = prefs.getString('persistent_place');
+      final distance = prefs.getDouble('persistent_distance');
+
+      if (placeString != null && distance != null) {
+        final placeJson = jsonDecode(placeString) as Map<String, dynamic>;
+        final place = LocationModel.fromJson(placeJson);
+
+        if (mounted) {
+          setState(() {
+            _persistentPlace = place;
+            _persistentDistance = distance;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando lugar persistente: $e');
+    }
+  }
+
+  // Borrar lugar persistente de SharedPreferences
+  Future<void> _clearPersistentPlace() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('persistent_place');
+      await prefs.remove('persistent_distance');
+    } catch (e) {
+      debugPrint('Error borrando lugar persistente: $e');
     }
   }
 
