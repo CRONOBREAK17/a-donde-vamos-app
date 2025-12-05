@@ -24,6 +24,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   final PlacesService _placesService = PlacesService();
   GoogleMapController? _mapController;
   bool _isFavorite = false;
+  bool _isVisited = false;
+  bool _isBlocked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -317,59 +319,126 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Widget _buildActionButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Column(
         children: [
-          // Botón de navegación
-          Expanded(
-            flex: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: _openNavigation,
-                icon: const Icon(Icons.navigation, color: Colors.white),
-                label: const Text(
-                  '¡Vamos!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
+          // Fila principal: Navegación Waze
+          Row(
+            children: [
+              // Botón de navegación Waze (principal)
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.secondary],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _openWazeNavigation,
+                    icon: const Icon(Icons.navigation, color: Colors.white),
+                    label: const Text(
+                      '🚗 ¡Vamos! (Waze)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(height: 12),
 
-          // Botón de llamar
-          if (widget.place.phoneNumber != null)
-            _buildCircularButton(icon: Icons.phone, onPressed: _makePhoneCall),
+          // Segunda fila: Botones secundarios
+          Row(
+            children: [
+              // Botón Google Maps
+              Expanded(
+                child: _buildSecondaryButton(
+                  icon: Icons.map,
+                  label: 'Google Maps',
+                  onPressed: _openGoogleMaps,
+                ),
+              ),
+              const SizedBox(width: 8),
 
-          const SizedBox(width: 12),
+              // Botón "Ya visité"
+              Expanded(
+                child: _buildSecondaryButton(
+                  icon: _isVisited ? Icons.check_circle : Icons.check_circle_outline,
+                  label: 'Ya visité',
+                  onPressed: _toggleVisited,
+                  color: _isVisited ? Colors.green : null,
+                ),
+              ),
+              const SizedBox(width: 8),
 
-          // Botón de compartir
-          _buildCircularButton(icon: Icons.share, onPressed: _sharePlace),
+              // Botón de llamar (si hay teléfono)
+              if (widget.place.phoneNumber != null)
+                _buildCircularButton(
+                  icon: Icons.phone,
+                  onPressed: _makePhoneCall,
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Tercera fila: Bloquear lugar
+          OutlinedButton.icon(
+            onPressed: _toggleBlockPlace,
+            icon: Icon(_isBlocked ? Icons.block : Icons.visibility_off),
+            label: Text(_isBlocked ? 'Lugar bloqueado' : 'No recomendar más'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _isBlocked ? Colors.red : AppColors.textSecondary,
+              side: BorderSide(
+                color: _isBlocked ? Colors.red : AppColors.textSecondary,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20, color: color ?? AppColors.primary),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: color ?? AppColors.primary,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color ?? AppColors.primary),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       ),
     );
   }
@@ -438,6 +507,66 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                   .join(', '),
             ),
           ],
+
+          // Sección de opiniones
+          const SizedBox(height: 24),
+          const Text(
+            'Opiniones de la comunidad',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildReviewsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection() {
+    // TODO: Obtener reviews de Supabase
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.chat_bubble_outline,
+                  color: AppColors.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                'Aún no hay opiniones de este lugar',
+                style: TextStyle(
+                  color: AppColors.textSecondary.withOpacity(0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () {
+              // TODO: Abrir modal para escribir opinión
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Próximamente: Escribe tu opinión'),
+                ),
+              );
+            },
+            icon: const Icon(Icons.rate_review, size: 18),
+            label: const Text('Sé el primero en opinar'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+            ),
+          ),
         ],
       ),
     );
@@ -498,7 +627,35 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   }
 
   // Funciones de acción
-  Future<void> _openNavigation() async {
+  Future<void> _openWazeNavigation() async {
+    // Intentar abrir Waze primero
+    final wazeUrl = Uri.parse(
+      'waze://?ll=${widget.place.latitude},${widget.place.longitude}&navigate=yes',
+    );
+
+    if (await canLaunchUrl(wazeUrl)) {
+      await launchUrl(wazeUrl, mode: LaunchMode.externalApplication);
+    } else {
+      // Si Waze no está instalado, abrir en browser para descargar
+      final wazeWebUrl = Uri.parse(
+        'https://www.waze.com/ul?ll=${widget.place.latitude},${widget.place.longitude}&navigate=yes',
+      );
+
+      if (await canLaunchUrl(wazeWebUrl)) {
+        await launchUrl(wazeWebUrl, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir Waze. ¿Está instalado?'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _openGoogleMaps() async {
     final url = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${widget.place.latitude},${widget.place.longitude}',
     );
@@ -508,10 +665,47 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo abrir la navegación')),
+          const SnackBar(content: Text('No se pudo abrir Google Maps')),
         );
       }
     }
+  }
+
+  void _toggleVisited() {
+    setState(() {
+      _isVisited = !_isVisited;
+    });
+
+    // TODO: Guardar en Supabase tabla visited_places
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isVisited
+              ? '✅ Marcado como visitado'
+              : 'Desmarcado como visitado',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _toggleBlockPlace() {
+    setState(() {
+      _isBlocked = !_isBlocked;
+    });
+
+    // TODO: Guardar en Supabase tabla blocked_locations
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isBlocked
+              ? '🚫 Este lugar no se recomendará más'
+              : 'Lugar desbloqueado',
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: _isBlocked ? Colors.red : null,
+      ),
+    );
   }
 
   Future<void> _makePhoneCall() async {
