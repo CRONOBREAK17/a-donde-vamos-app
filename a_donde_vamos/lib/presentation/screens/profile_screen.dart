@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoading = false;
   bool _isLoadingImage = false;
+  bool _isPremium = false;
   String? _userId;
   String? _email;
   String _username = '';
@@ -76,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _description = response['description'] as String? ?? '';
         _activityPoints = response['activity_points'] as int? ?? 0;
         _profilePicture = response['profile_picture'] as String?;
+        _isPremium = response['is_premium'] as bool? ?? false;
         _badges = List<Map<String, dynamic>>.from(badgesResponse);
         _descriptionController.text = _description;
       });
@@ -297,6 +299,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 15),
+
+            // Botón Premium (solo si no es premium)
+            if (!_isPremium)
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFD700).withOpacity(0.4),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/premium');
+                  },
+                  icon: const Icon(Icons.star, color: Colors.black),
+                  label: const Text(
+                    '⭐ Hazte Premium',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 30),
 

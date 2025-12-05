@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/services/location_service.dart';
 import '../../data/services/places_service.dart';
 import '../../data/services/user_places_service.dart';
+import '../../data/services/ad_service.dart';
 import '../../data/models/location_model.dart';
 import '../widgets/neon_alert_dialog.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,6 +26,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final LocationService _locationService = LocationService();
   final PlacesService _placesService = PlacesService();
   final UserPlacesService _userPlacesService = UserPlacesService();
+  final AdService _adService = AdService();
+  final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;
   bool _showFilters = false;
@@ -30,6 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _searchRadius = 3.0; // en km
   String _selectedTimeOfDay = 'anytime';
   String _selectedCompany = 'anyone';
+  bool _isPremium = false;
 
   Position? _currentPosition;
   LocationModel? _persistentPlace; // Lugar que permanece visible
@@ -43,6 +49,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Future.microtask(() => _getCurrentLocation());
     // Cargar sitio persistente si existe
     _loadPersistentPlace();
+    // Verificar estado premium y cargar ads si es necesario
+    _checkPremiumStatus();
+  }
+
+  Future<void> _checkPremiumStatus() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        final response = await _supabase
+            .from('users')
+            .select('is_premium')
+            .eq('id', user.id)
+            .single();
+
+        setState(() {
+          _isPremium = response['is_premium'] ?? false;
+        });
+      }
+
+      // Si no es premium, cargar anuncios
+      if (!_isPremium) {
+        _adService.createBannerAd();
+        _adService.createInterstitialAd();
+      }
+    } catch (e) {
+      debugPrint('Error verificando premium: $e');
+      // Por defecto cargar ads si hay error
+      _adService.createBannerAd();
+      _adService.createInterstitialAd();
+    }
+  }
+
+  @override
+  void dispose() {
+    _adService.dispose();
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -78,6 +120,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_currentPosition == null) {
       _showErrorDialog('Error', 'Necesitamos tu ubicación para buscar lugares');
       return;
+    }
+
+    // Mostrar interstitial ad cada 3 búsquedas (solo si no es premium)
+    if (!_isPremium) {
+      _adService.showInterstitialIfReady();
     }
 
     setState(() {
@@ -306,6 +353,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _persistentPlace != null
                   ? _buildPersistentPlacePanel()
                   : _buildResultPlaceholder(),
+
+              const SizedBox(height: 20),
+
+              // Banner Ad (solo si no es premium)
+              if (!_isPremium) const AdBannerWidget(),
             ],
           ),
         ),
