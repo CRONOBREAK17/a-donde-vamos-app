@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../widgets/neon_alert_dialog.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -16,6 +17,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;
+  bool _isPremium = false;
   List<Map<String, dynamic>> _favoriteLists = [];
   Map<String, dynamic>? _selectedList;
   List<Map<String, dynamic>> _placesInSelectedList = [];
@@ -23,7 +25,27 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
+    _checkPremiumStatus();
     _loadFavoriteLists();
+  }
+
+  Future<void> _checkPremiumStatus() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        final response = await _supabase
+            .from('users')
+            .select('is_premium')
+            .eq('id', userId)
+            .single();
+        setState(() {
+          _isPremium = response['is_premium'] ?? false;
+        });
+      }
+    } catch (e) {
+      // Si hay error, asumir no premium
+      setState(() => _isPremium = false);
+    }
   }
 
   Future<void> _loadFavoriteLists() async {
@@ -363,8 +385,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       onRefresh: () => _loadPlacesInList(_selectedList!['id']),
       child: ListView.builder(
         padding: const EdgeInsets.all(15),
-        itemCount: _placesInSelectedList.length,
+        itemCount: _placesInSelectedList.length + (_isPremium ? 0 : 1),
         itemBuilder: (context, index) {
+          // Mostrar banner ad al final si no es premium
+          if (index == _placesInSelectedList.length && !_isPremium) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: AdBannerWidget(),
+            );
+          }
           final place = _placesInSelectedList[index];
 
           return Card(

@@ -10,28 +10,19 @@ class AdService {
   // IDs de prueba (REEMPLAZAR con tus IDs reales de AdMob)
   static const String _testAppId = 'ca-app-pub-3940256099942544~3347511713';
 
-  // Banner Ad Test ID
-  static const String _bannerAdUnitId = kReleaseMode
-      ? 'TU_BANNER_AD_UNIT_ID' // Reemplazar con tu ID real
-      : 'ca-app-pub-3940256099942544/6300978111'; // Test ID
+  // Banner Ad ID (aparece en dashboard y otras pantallas)
+  static const String _bannerAdUnitId =
+      'ca-app-pub-5953435941236720/2633441735';
 
-  // Interstitial Ad Test ID
-  static const String _interstitialAdUnitId = kReleaseMode
-      ? 'TU_INTERSTITIAL_AD_UNIT_ID' // Reemplazar con tu ID real
-      : 'ca-app-pub-3940256099942544/1033173712'; // Test ID
-
-  // Rewarded Ad Test ID
-  static const String _rewardedAdUnitId = kReleaseMode
-      ? 'TU_REWARDED_AD_UNIT_ID' // Reemplazar con tu ID real
-      : 'ca-app-pub-3940256099942544/5224354917'; // Test ID
+  // Interstitial Ad ID (pantalla completa cada 3 búsquedas)
+  static const String _interstitialAdUnitId =
+      'ca-app-pub-5953435941236720/2555859613';
 
   BannerAd? _bannerAd;
   InterstitialAd? _interstitialAd;
-  RewardedAd? _rewardedAd;
 
   bool _isBannerAdReady = false;
   bool _isInterstitialAdReady = false;
-  bool _isRewardedAdReady = false;
 
   int _searchCount = 0;
   static const int _interstitialFrequency = 3; // Mostrar cada 3 búsquedas
@@ -112,50 +103,6 @@ class AdService {
     }
   }
 
-  // Crear Rewarded Ad (para futuras funcionalidades)
-  void createRewardedAd() {
-    RewardedAd.load(
-      adUnitId: _rewardedAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          debugPrint('✅ Rewarded ad cargado');
-          _rewardedAd = ad;
-          _isRewardedAdReady = true;
-        },
-        onAdFailedToLoad: (error) {
-          debugPrint('❌ Error cargando rewarded: $error');
-          _isRewardedAdReady = false;
-        },
-      ),
-    );
-  }
-
-  // Mostrar Rewarded Ad con callback de recompensa
-  void showRewardedAd({required Function(int) onUserEarnedReward}) {
-    if (_isRewardedAdReady && _rewardedAd != null) {
-      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _isRewardedAdReady = false;
-          createRewardedAd(); // Precargar el siguiente
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _isRewardedAdReady = false;
-          createRewardedAd();
-        },
-      );
-
-      _rewardedAd!.show(
-        onUserEarnedReward: (ad, reward) {
-          debugPrint('Usuario ganó recompensa: ${reward.amount}');
-          onUserEarnedReward(reward.amount.toInt());
-        },
-      );
-    }
-  }
-
   // Getters
   BannerAd? get bannerAd => _bannerAd;
   bool get isBannerAdReady => _isBannerAdReady;
@@ -164,6 +111,5 @@ class AdService {
   void dispose() {
     _bannerAd?.dispose();
     _interstitialAd?.dispose();
-    _rewardedAd?.dispose();
   }
 }

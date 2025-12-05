@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/rank_utils.dart';
 import '../widgets/rank_profile_picture.dart';
 import '../widgets/neon_alert_dialog.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
@@ -614,6 +615,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
+
+            // Banner ad para usuarios no premium
+            if (!_isPremium)
+              const Padding(
+                padding: EdgeInsets.only(top: 30, bottom: 10),
+                child: AdBannerWidget(),
+              ),
           ],
         ),
       ),

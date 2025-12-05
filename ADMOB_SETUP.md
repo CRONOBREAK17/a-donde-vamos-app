@@ -1,13 +1,23 @@
 # 🎯 Configuración de AdMob - Guía Paso a Paso
 
-## 📱 Paso 1: Crear cuenta y app en AdMob
+## ⚠️ IMPORTANTE: NO necesitas Play Store para configurar AdMob
+
+**Puedes configurar AdMob AHORA, ANTES de pagar los $25 de Google Play Console**
+
+Los anuncios funcionarán en modo desarrollo inmediatamente.
+
+---
+
+## 📱 Paso 1: Crear cuenta y app en AdMob (GRATIS)
 
 1. Ve a **https://admob.google.com**
 2. Inicia sesión con tu cuenta de Google
-3. Haz clic en "Empezar" o "Agregar aplicación"
-4. Selecciona "Android"
-5. Ingresa el nombre de tu app: **"¿A Dónde Vamos?"**
-6. Te darán un **App ID** como: `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`
+3. Haz clic en "Get Started" o "Apps" → "Add App"
+4. **Pregunta: "¿Tu app está publicada?"**
+   - **Selecciona: NO** ✅ (Esto es clave)
+5. Plataforma: **Android**
+6. Nombre de tu app: **"¿A Dónde Vamos?"**
+7. Te darán un **App ID** inmediatamente como: `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`
 
 ## 📝 Paso 2: Crear Ad Units (Unidades de Anuncios)
 

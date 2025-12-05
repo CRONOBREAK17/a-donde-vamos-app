@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   late TabController _tabController;
 
   bool _isLoading = false;
+  bool _isPremium = false;
   List<Map<String, dynamic>> _visitedPlaces = [];
   List<Map<String, dynamic>> _pendingPlaces = [];
 
@@ -26,6 +28,27 @@ class _HistoryScreenState extends State<HistoryScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadHistory();
+    _checkPremiumStatus();
+  }
+
+  Future<void> _checkPremiumStatus() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        final response = await _supabase
+            .from('users')
+            .select('is_premium')
+            .eq('id', user.id)
+            .single();
+        if (mounted) {
+          setState(() {
+            _isPremium = response['is_premium'] ?? false;
+          });
+        }
+      }
+    } catch (e) {
+      // Ignorar errores
+    }
   }
 
   @override
@@ -125,8 +148,17 @@ class _HistoryScreenState extends State<HistoryScreen>
       onRefresh: _loadHistory,
       child: ListView.builder(
         padding: const EdgeInsets.all(15),
-        itemCount: _visitedPlaces.length,
+        itemCount:
+            _visitedPlaces.length + (_isPremium ? 0 : 1), // +1 para el ad
         itemBuilder: (context, index) {
+          // Mostrar banner ad al final si no es premium
+          if (index == _visitedPlaces.length && !_isPremium) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: AdBannerWidget(),
+            );
+          }
+
           final place = _visitedPlaces[index];
           final visitedAt = DateTime.parse(place['visited_at']);
           final formattedDate = DateFormat(
