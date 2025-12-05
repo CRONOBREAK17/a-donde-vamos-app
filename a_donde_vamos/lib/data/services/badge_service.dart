@@ -112,21 +112,7 @@ class BadgeService {
           .eq('user_id', userId);
       final visitedCount = visitedResponse.length;
 
-      // Contar favoritos
-      final favoriteResponse = await _supabase
-          .from('favorite_places')
-          .select()
-          .eq('user_id', userId);
-      final favoriteCount = favoriteResponse.length;
-
-      // Contar amigos
-      final friendResponse = await _supabase
-          .from('user_friends')
-          .select()
-          .eq('user_id', userId);
-      final friendCount = friendResponse.length;
-
-      // Obtener puntos de actividad
+      // Obtener puntos de actividad del usuario
       final userResponse = await _supabase
           .from('users')
           .select('activity_points')
@@ -134,20 +120,12 @@ class BadgeService {
           .single();
       final activityPoints = userResponse['activity_points'] as int? ?? 0;
 
-      return {
-        'visited_count': visitedCount,
-        'favorite_count': favoriteCount,
-        'friend_count': friendCount,
-        'activity_points': activityPoints,
-      };
+      print('📊 Stats - Visitados: $visitedCount, Puntos: $activityPoints');
+
+      return {'visited_count': visitedCount, 'activity_points': activityPoints};
     } catch (e) {
-      print('Error obteniendo estadísticas: $e');
-      return {
-        'visited_count': 0,
-        'favorite_count': 0,
-        'friend_count': 0,
-        'activity_points': 0,
-      };
+      print('❌ Error obteniendo estadísticas: $e');
+      return {'visited_count': 0, 'activity_points': 0};
     }
   }
 
