@@ -1,21 +1,23 @@
 // lib/config/supabase_config.dart
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SupabaseConfig {
-  // Configuración de Supabase (cargada desde .env)
-  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
-  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  static String get serviceRoleKey => dotenv.env['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
+  // Configuración de Supabase
+  static String get supabaseUrl => 'https://aukzmohxmqvgqrfporwg.supabase.co';
+  static String get supabaseAnonKey =>
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MTMyNDQsImV4cCI6MjA2OTk4OTI0NH0.sb_publishable_5V3rJ0rgCfs1jhPSS19o1g_7Z6cce3x';
+  static String get serviceRoleKey =>
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDQxMzI0NCwiZXhwIjoyMDY5OTg5MjQ0fQ.WQzrHIpHzUkF7GxF_QuLcUbqj7JimoxUXiO8WfIIDl0';
 
   // Google Maps API
-  static String get googleMapsApiKey => dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+  static String get googleMapsApiKey =>
+      'AIzaSyB8qeOmj_KuX_OMtJ__MDtC-PL9hk6voDM';
 
   // Stripe (para pagos premium)
-  static String get stripePublishableKey => dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
-  static String get stripeWebhookSecret => dotenv.env['STRIPE_WEBHOOK_SECRET'] ?? '';
+  static String get stripePublishableKey => 'pk_test_xxxxx';
+  static String get stripeWebhookSecret => 'whsec_xxxxx';
 
   // Frontend URL
-  static String get frontendUrl => dotenv.env['FRONTEND_URL'] ?? '';
+  static String get frontendUrl => 'https://a-donde-vamos-omega.vercel.app';
 
   // Nombres de tablas (según tu esquema)
   static const String usersTable = 'users';

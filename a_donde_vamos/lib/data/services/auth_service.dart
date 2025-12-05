@@ -2,6 +2,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import '../models/user_model.dart';
+import '../../config/supabase_config.dart';
 
 class AuthService {
   final SupabaseClient _client = SupabaseService.client;
@@ -23,9 +24,7 @@ class AuthService {
       final response = await _client.auth.signUp(
         email: email,
         password: password,
-        data: {
-          'username': username,
-        },
+        data: {'username': username},
       );
 
       // Si el registro fue exitoso, crear perfil en la tabla users
@@ -110,7 +109,8 @@ class AuthService {
         await _client.from('users').insert({
           'id': user.id,
           'email': user.email,
-          'username': user.userMetadata?['username'] ?? user.email?.split('@')[0],
+          'username':
+              user.userMetadata?['username'] ?? user.email?.split('@')[0],
           'created_at': DateTime.now().toIso8601String(),
           'activity_points': 0,
           'is_premium': false,
@@ -135,10 +135,7 @@ class AuthService {
       if (profilePicture != null) updates['profile_picture'] = profilePicture;
 
       if (updates.isNotEmpty) {
-        await _client
-            .from('users')
-            .update(updates)
-            .eq('id', userId);
+        await _client.from('users').update(updates).eq('id', userId);
       }
     } catch (e) {
       rethrow;

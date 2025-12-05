@@ -8,10 +8,10 @@ import 'data/services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicializar Supabase
   await SupabaseService.initialize();
-  
+
   runApp(const MyApp());
 }
 

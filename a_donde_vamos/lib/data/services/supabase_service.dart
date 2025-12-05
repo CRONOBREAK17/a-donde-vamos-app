@@ -8,7 +8,9 @@ class SupabaseService {
   // Singleton pattern
   static SupabaseClient get client {
     if (_client == null) {
-      throw Exception('Supabase no ha sido inicializado. Llama a initialize() primero.');
+      throw Exception(
+        'Supabase no ha sido inicializado. Llama a initialize() primero.',
+      );
     }
     return _client!;
   }
@@ -25,5 +27,6 @@ class SupabaseService {
   // Auth helpers
   static User? get currentUser => client.auth.currentUser;
   static bool get isAuthenticated => currentUser != null;
-  static Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
+  static Stream<AuthState> get authStateChanges =>
+      client.auth.onAuthStateChange;
 }
