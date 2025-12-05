@@ -16,7 +16,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
-  
+
   bool _isLogin = true;
   bool _isLoading = false;
   String? _errorMessage;
@@ -29,8 +29,48 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  String _getErrorMessage(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+
+    // Errores de login
+    if (errorString.contains('invalid login credentials') ||
+        errorString.contains('invalid_credentials')) {
+      return '❌ Correo o contraseña incorrectos';
+    }
+
+    if (errorString.contains('email not confirmed')) {
+      return '📧 Por favor confirma tu correo electrónico';
+    }
+
+    if (errorString.contains('invalid email')) {
+      return '📧 El formato del correo no es válido';
+    }
+
+    // Errores de registro
+    if (errorString.contains('user already registered') ||
+        errorString.contains('already registered')) {
+      return '⚠️ Este correo ya está registrado';
+    }
+
+    if (errorString.contains('password') && errorString.contains('short')) {
+      return '🔒 La contraseña debe tener al menos 6 caracteres';
+    }
+
+    if (errorString.contains('weak password')) {
+      return '🔒 La contraseña es muy débil, usa mayúsculas y números';
+    }
+
+    // Errores de red
+    if (errorString.contains('network') || errorString.contains('connection')) {
+      return '🌐 Error de conexión, verifica tu internet';
+    }
+
+    // Error genérico
+    return '❌ Error: ${error.toString().replaceAll('Exception:', '').trim()}';
+  }
+
   Future<void> _handleEmailAuth() async {
-    if (_emailController.text.trim().isEmpty || 
+    if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       setState(() {
         _errorMessage = 'Por favor completa todos los campos';
@@ -55,8 +95,8 @@ class _AuthScreenState extends State<AuthScreen> {
         await _authService.signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          username: _usernameController.text.trim().isNotEmpty 
-              ? _usernameController.text.trim() 
+          username: _usernameController.text.trim().isNotEmpty
+              ? _usernameController.text.trim()
               : null,
         );
       }
@@ -67,7 +107,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = _getErrorMessage(e);
       });
     } finally {
       setState(() {
@@ -84,7 +124,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       await _authService.signInWithGoogle();
-      
+
       // Nota: Con OAuth, el usuario será redirigido al navegador
       // La sesión se manejará automáticamente cuando regrese
       if (mounted) {
@@ -97,7 +137,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al iniciar sesión con Google: ${e.toString()}';
+        _errorMessage = _getErrorMessage(e);
       });
     } finally {
       setState(() {
@@ -215,9 +255,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : Text(
-                          _isLogin ? AppStrings.login : AppStrings.register,
-                        ),
+                      : Text(_isLogin ? AppStrings.login : AppStrings.register),
                 ),
               ),
               const SizedBox(height: 16),
