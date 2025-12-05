@@ -4,6 +4,8 @@ import '../../core/constants/app_colors.dart';
 import 'dashboard_screen.dart';
 import 'history_screen.dart';
 import 'favorites_screen.dart';
+import 'friends_screen.dart';
+import 'ranking_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
     const DashboardScreen(),
     const HistoryScreen(),
     const FavoritesScreen(),
+    const FriendsScreen(),
+    const RankingScreen(),
     const ProfileScreen(),
   ];
 
@@ -47,6 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
             label: 'Favoritos',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Amigos'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events),
+            label: 'Ranking',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],

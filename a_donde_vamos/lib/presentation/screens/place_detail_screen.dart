@@ -707,19 +707,17 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.cardBackground,
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(width: 2),
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withOpacity(0.3),
-                  AppColors.secondary.withOpacity(0.3),
-                ],
+              border: Border.all(
+                width: 2,
+                color: AppColors.primary.withOpacity(0.3),
               ),
+              // Eliminamos el gradiente y dejamos solo color sólido
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withOpacity(0.3),
@@ -992,32 +990,141 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<void> _toggleFavorite() async {
     final newState = !_isFavorite;
 
-    setState(() => _isFavorite = newState);
-
-    bool success;
     if (newState) {
-      success = await _userPlacesService.addToFavorites(widget.place);
+      // Mostrar selector de lista al añadir
+      await _showFavoriteListSelector();
     } else {
-      success = await _userPlacesService.removeFromFavorites(widget.place);
+      // Quitar de favoritos directamente
+      setState(() => _isFavorite = false);
+      final success = await _userPlacesService.removeFromFavorites(
+        widget.place,
+      );
+
+      if (mounted) {
+        if (success) {
+          NeonAlertDialog.show(
+            context: context,
+            icon: Icons.favorite_border,
+            title: 'Eliminado de favoritos',
+            message: '${widget.place.name} se eliminó de favoritos',
+          );
+        } else {
+          setState(() => _isFavorite = true);
+          NeonAlertDialog.show(
+            context: context,
+            icon: Icons.error_outline,
+            title: 'Error',
+            message: 'No se pudo eliminar de favoritos',
+          );
+        }
+      }
     }
+  }
+
+  Future<void> _showFavoriteListSelector() async {
+    // Cargar listas de favoritos
+    final lists = await _userPlacesService.getFavoriteLists();
+
+    if (lists.isEmpty) {
+      // Si no hay listas, crear una por defecto y añadir ahí
+      setState(() => _isFavorite = true);
+      final success = await _userPlacesService.addToFavorites(widget.place);
+
+      if (mounted) {
+        if (success) {
+          NeonAlertDialog.show(
+            context: context,
+            icon: Icons.favorite,
+            title: 'Agregado a favoritos',
+            message: '${widget.place.name} se guardó en "Mis Favoritos"',
+          );
+        } else {
+          setState(() => _isFavorite = false);
+          NeonAlertDialog.show(
+            context: context,
+            icon: Icons.error_outline,
+            title: 'Error',
+            message: 'No se pudo agregar a favoritos',
+          );
+        }
+      }
+      return;
+    }
+
+    // Mostrar dialog con selector de lista
+    if (!mounted) return;
+
+    final selectedList = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        title: const Text(
+          '⭐ Guardar en lista',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '¿En qué lista deseas guardar este lugar?',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 16),
+            ...lists.map((list) {
+              final isDefault = list['is_default'] == true;
+              return ListTile(
+                leading: Icon(
+                  isDefault ? Icons.favorite : Icons.folder,
+                  color: AppColors.primary,
+                ),
+                title: Text(
+                  '${list['name']} ${isDefault ? "📌" : ""}',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                onTap: () => Navigator.pop(context, list),
+                tileColor: AppColors.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                ),
+              );
+            }),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedList == null) return;
+
+    // Añadir a la lista seleccionada
+    setState(() => _isFavorite = true);
+    final success = await _userPlacesService.addToFavoritesWithList(
+      widget.place,
+      selectedList['id'],
+    );
 
     if (mounted) {
       if (success) {
         NeonAlertDialog.show(
           context: context,
           icon: Icons.favorite,
-          title: newState ? 'Agregado a favoritos' : 'Eliminado de favoritos',
-          message: newState
-              ? '${widget.place.name} se guardó en tus favoritos'
-              : '${widget.place.name} se eliminó de favoritos',
+          title: 'Agregado a favoritos',
+          message:
+              '${widget.place.name} se guardó en "${selectedList['name']}"',
         );
       } else {
-        setState(() => _isFavorite = !newState);
+        setState(() => _isFavorite = false);
         NeonAlertDialog.show(
           context: context,
           icon: Icons.error_outline,
           title: 'Error',
-          message: 'No se pudo actualizar favoritos',
+          message: 'No se pudo agregar a favoritos',
         );
       }
     }

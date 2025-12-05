@@ -126,7 +126,61 @@ class UserPlacesService {
     }
   }
 
-  // Agregar a favoritos
+  // Obtener listas de favoritos del usuario
+  Future<List<Map<String, dynamic>>> getFavoriteLists() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return [];
+
+      final response = await _supabase
+          .from(SupabaseConfig.favoriteListsTable)
+          .select('id, name, is_default')
+          .eq('user_id', user.id)
+          .order('is_default', ascending: false)
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error obteniendo listas: $e');
+      return [];
+    }
+  }
+
+  // Agregar a favoritos en lista específica
+  Future<bool> addToFavoritesWithList(
+    LocationModel place,
+    String listId,
+  ) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return false;
+
+      final locationId = await _ensureLocationExists(place);
+      if (locationId == null) return false;
+
+      // Agregar a favoritos con place_data como jsonb
+      await _supabase.from(SupabaseConfig.favoritePlacesTable).insert({
+        'list_id': listId,
+        'place_id': locationId,
+        'place_name': place.name,
+        'place_address': place.address,
+        'place_data': {
+          'google_place_id': place.id,
+          'latitude': place.latitude,
+          'longitude': place.longitude,
+          'rating': place.rating,
+          'photo_reference': place.photoReference,
+        },
+      });
+
+      return true;
+    } catch (e) {
+      print('Error agregando a favoritos: $e');
+      return false;
+    }
+  }
+
+  // Agregar a favoritos (lista por defecto)
   Future<bool> addToFavorites(LocationModel place) async {
     try {
       final user = _supabase.auth.currentUser;

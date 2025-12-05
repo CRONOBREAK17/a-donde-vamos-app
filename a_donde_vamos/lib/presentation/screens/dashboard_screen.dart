@@ -1,11 +1,14 @@
 // lib/presentation/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/services/location_service.dart';
 import '../../data/services/places_service.dart';
+import '../../data/services/user_places_service.dart';
 import '../../data/models/location_model.dart';
+import '../widgets/neon_alert_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +20,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final LocationService _locationService = LocationService();
   final PlacesService _placesService = PlacesService();
+  final UserPlacesService _userPlacesService = UserPlacesService();
 
   bool _isLoading = false;
   bool _showFilters = false;
@@ -26,7 +30,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedCompany = 'anyone';
 
   Position? _currentPosition;
-  LocationModel? _foundPlace;
+  LocationModel? _persistentPlace; // Lugar que permanece visible
+  double? _persistentDistance; // Distancia del lugar persistente
   String? _locationError;
 
   @override
@@ -73,7 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     setState(() {
       _isLoading = true;
-      _foundPlace = null;
     });
 
     try {
@@ -93,12 +97,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           place.longitude,
         );
 
+        // Guardar sitio de forma persistente
         setState(() {
-          _foundPlace = place;
+          _persistentPlace = place;
+          _persistentDistance = distance;
           _isLoading = false;
         });
-
-        _showPlaceDialog(place, distance);
       } else {
         setState(() {
           _isLoading = false;
@@ -116,67 +120,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _showPlaceDialog(LocationModel place, double distanceInMeters) {
-    final distanceText = _locationService.formatDistance(distanceInMeters);
+  Future<void> _markPlaceAsVisited() async {
+    if (_persistentPlace == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBackground,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          '🎉 ${place.name}',
-          style: const TextStyle(color: AppColors.primary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '📍 ${place.address}',
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '📏 Distancia: $distanceText',
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            if (place.rating != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                '⭐ Rating: ${place.rating!.toStringAsFixed(1)}',
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
-            if (place.priceLevel != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                '💰 Precio: ${place.priceDisplay}',
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(
-                context,
-                '/place-detail',
-                arguments: {'place': place, 'distance': distanceInMeters},
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Ver más'),
-          ),
-        ],
-      ),
+    final success = await _userPlacesService.markAsVisited(_persistentPlace!);
+
+    if (success) {
+      setState(() {
+        _persistentPlace = null;
+        _persistentDistance = null;
+      });
+
+      if (mounted) {
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.check_circle,
+          title: '¡Lugar visitado!',
+          message: 'Se agregó a tu historial correctamente',
+          isSuccess: true,
+        );
+      }
+    } else {
+      if (mounted) {
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.error_outline,
+          title: 'Error',
+          message: 'No se pudo marcar como visitado',
+        );
+      }
+    }
+  }
+
+  Future<void> _openInMaps() async {
+    if (_persistentPlace == null) return;
+
+    final url = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${_persistentPlace!.latitude},${_persistentPlace!.longitude}',
     );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showErrorDialog(String title, String message) {
@@ -259,8 +244,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 24),
 
-              // Resultado (placeholder)
-              _buildResultPlaceholder(),
+              // Resultado (panel persistente o placeholder)
+              _persistentPlace != null
+                  ? _buildPersistentPlacePanel()
+                  : _buildResultPlaceholder(),
             ],
           ),
         ),
@@ -681,6 +668,198 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPersistentPlacePanel() {
+    final place = _persistentPlace!;
+    final distanceText = _locationService.formatDistance(_persistentDistance!);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título del panel
+          Row(
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  place.name,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Dirección
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  place.address,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Distancia, Rating, Precio
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _buildInfoChip(
+                icon: Icons.straighten,
+                label: distanceText,
+                color: AppColors.primary,
+              ),
+              if (place.rating != null)
+                _buildInfoChip(
+                  icon: Icons.star,
+                  label: place.rating!.toStringAsFixed(1),
+                  color: Colors.amber,
+                ),
+              if (place.priceLevel != null)
+                _buildInfoChip(
+                  icon: Icons.attach_money,
+                  label: place.priceDisplay,
+                  color: Colors.green,
+                ),
+            ],
+          ),
+
+          // Teléfono (si existe)
+          if (place.phoneNumber != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.phone, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  place.phoneNumber!,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 20),
+
+          // Botones de acción
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _openInMaps,
+                  icon: const Icon(Icons.map),
+                  label: const Text('Abrir Maps'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/place-detail',
+                      arguments: {
+                        'place': place,
+                        'distance': _persistentDistance,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('Ver detalles'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _markPlaceAsVisited,
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Ya visité este lugar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
