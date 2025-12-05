@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() {
         _locationError = e.toString();
       });
@@ -168,10 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.pushNamed(
                 context,
                 '/place-detail',
-                arguments: {
-                  'place': place,
-                  'distance': distanceInMeters,
-                },
+                arguments: {'place': place, 'distance': distanceInMeters},
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
