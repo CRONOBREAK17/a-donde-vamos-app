@@ -41,9 +41,10 @@ class LocationService {
         );
       }
 
-      // Obtener ubicación actual
+      // Obtener ubicación actual con timeout para evitar congelamiento
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        desiredAccuracy: LocationAccuracy.medium, // Cambiado de high a medium para ser más rápido
+        timeLimit: const Duration(seconds: 10), // Timeout de 10 segundos
       );
 
       return position;

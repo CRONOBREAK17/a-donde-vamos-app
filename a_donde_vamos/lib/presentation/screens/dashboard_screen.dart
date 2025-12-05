@@ -32,16 +32,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    // Obtener ubicación en segundo plano sin bloquear el UI
+    Future.microtask(() => _getCurrentLocation());
   }
 
   Future<void> _getCurrentLocation() async {
+    if (!mounted) return;
+
     setState(() {
       _locationError = null;
     });
 
     try {
       final position = await _locationService.getCurrentLocation();
+      if (!mounted) return;
+
       if (position != null) {
         setState(() {
           _currentPosition = position;
@@ -52,6 +57,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _locationError = e.toString();
       });
@@ -293,7 +300,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Row(
         children: [
-          Icon(statusIcon, color: statusColor),
+          _currentPosition == null && _locationError == null
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: statusColor,
+                  ),
+                )
+              : Icon(statusIcon, color: statusColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -316,6 +332,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          if (_locationError != null)
+            IconButton(
+              icon: const Icon(Icons.refresh, color: AppColors.secondary),
+              onPressed: _getCurrentLocation,
+              tooltip: 'Reintentar',
+            ),
         ],
       ),
     );

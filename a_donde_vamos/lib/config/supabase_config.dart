@@ -4,9 +4,9 @@ class SupabaseConfig {
   // Configuración de Supabase
   static String get supabaseUrl => 'https://aukzmohxmqvgqrfporwg.supabase.co';
   static String get supabaseAnonKey =>
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0MTMyNDQsImV4cCI6MjA2OTk4OTI0NH0.sb_publishable_5V3rJ0rgCfs1jhPSS19o1g_7Z6cce3x';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMyNjk2MjYsImV4cCI6MjA0ODg0NTYyNn0.mEE4dkeL2e_yJqOJg2Qh9SG6Qb18XQWyJZIBTwdwz58';
   static String get serviceRoleKey =>
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDQxMzI0NCwiZXhwIjoyMDY5OTg5MjQ0fQ.WQzrHIpHzUkF7GxF_QuLcUbqj7JimoxUXiO8WfIIDl0';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1a3ptb2h4bXF2Z3FyZnBvcndnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzI2OTYyNiwiZXhwIjoyMDQ4ODQ1NjI2fQ.DZMGdpg_Kv3qNMt1cSxEQ5yKJVIUBJVOlkvJ1u_y7Q0';
 
   // Google Maps API
   static String get googleMapsApiKey =>
