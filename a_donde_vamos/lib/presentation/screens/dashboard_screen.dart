@@ -177,7 +177,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _markPlaceAsVisited() async {
     if (_persistentPlace == null) return;
 
+    print('📍 Marcando lugar como visitado...');
     final result = await _userPlacesService.markAsVisited(_persistentPlace!);
+    print('📦 Resultado: $result');
 
     if (result['success'] == true) {
       // Borrar del almacenamiento persistente
@@ -198,14 +200,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
 
         // Mostrar logro si se desbloqueó alguno
+        print('🔍 Verificando badge: ${result['badge']}');
         if (result['badge'] != null) {
           final badge = result['badge'] as Map<String, dynamic>;
+          print('🎊 Mostrando diálogo de logro: $badge');
           AchievementDialog.show(
             context: context,
             badgeName: badge['name'] ?? 'Nuevo logro',
             badgeDescription: badge['description'] ?? '',
             badgeIcon: badge['icon_url'],
           );
+        } else {
+          print('❌ No se desbloqueó ninguna insignia');
         }
       }
     } else {

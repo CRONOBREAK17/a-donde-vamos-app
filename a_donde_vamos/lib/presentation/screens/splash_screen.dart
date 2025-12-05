@@ -1,19 +1,42 @@
 // lib/presentation/screens/splash_screen.dart
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Navegar automáticamente después de 2 segundos
-    Future.delayed(const Duration(seconds: 2), () {
-      // TODO: Verificar si hay sesión activa
-      Navigator.pushReplacementNamed(context, '/auth');
-    });
+  State<SplashScreen> createState() => _SplashScreenState();
+}
 
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Verificar si hay sesión activa
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null) {
+      // Usuario ya tiene sesión activa
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // No hay sesión, ir a login
+      Navigator.pushReplacementNamed(context, '/auth');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
