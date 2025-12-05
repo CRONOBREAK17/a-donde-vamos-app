@@ -2,6 +2,21 @@
 
 Aplicación móvil Android nativa para descubrir lugares aleatorios cerca de ti (restaurantes, cafés, bares).
 
+## 🎉 Nuevas Funcionalidades Implementadas
+
+**Ver**: [`QUICK_START.md`](QUICK_START.md) para instrucciones de uso inmediatas
+
+✅ **Sistema de Favoritos** - Guarda tus lugares preferidos  
+✅ **Lugares Visitados** - Marca los lugares que ya visitaste  
+✅ **Bloquear Lugares** - No volver a ver lugares que no te gustaron  
+✅ **Sistema de Reseñas** - Lee y escribe opiniones con calificaciones  
+✅ **Alertas Neon** - Feedback visual personalizado con diseño neon  
+
+**Documentación completa**:
+- 📖 [`FEATURES.md`](FEATURES.md) - Guía de funcionalidades
+- 🗺️ [`GOOGLE_MAPS_FIX.md`](GOOGLE_MAPS_FIX.md) - Solución para mapa en blanco
+- 📋 [`IMPLEMENTATION_SUMMARY.md`](IMPLEMENTATION_SUMMARY.md) - Resumen técnico
+
 ## 🛠️ **Stack Tecnológico Recomendado**
 
 ### **Opción 1: Desarrollo Nativo (Kotlin)**

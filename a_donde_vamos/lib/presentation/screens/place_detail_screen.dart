@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/location_model.dart';
 import '../../data/services/places_service.dart';
+import '../../data/services/user_places_service.dart';
+import '../widgets/neon_alert_dialog.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final LocationModel place;
@@ -22,10 +24,49 @@ class PlaceDetailScreen extends StatefulWidget {
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   final PlacesService _placesService = PlacesService();
-  GoogleMapController? _mapController;
+  final UserPlacesService _userPlacesService = UserPlacesService();
   bool _isFavorite = false;
   bool _isVisited = false;
   bool _isBlocked = false;
+  List<Map<String, dynamic>> _reviews = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlaceStatus();
+    _loadReviews();
+  }
+
+  Future<void> _loadPlaceStatus() async {
+    try {
+      final results = await Future.wait([
+        _userPlacesService.isFavorite(widget.place.id),
+        _userPlacesService.isVisited(widget.place.id),
+        _userPlacesService.isBlocked(widget.place.id),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = results[0];
+          _isVisited = results[1];
+          _isBlocked = results[2];
+        });
+      }
+    } catch (e) {
+      print('Error cargando estado del lugar: $e');
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    try {
+      final reviews = await _userPlacesService.getPlaceReviews(widget.place.id);
+      if (mounted) {
+        setState(() => _reviews = reviews);
+      }
+    } catch (e) {
+      print('Error cargando reseñas: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,22 +152,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             _isFavorite ? Icons.favorite : Icons.favorite_border,
             color: _isFavorite ? AppColors.secondary : Colors.white,
           ),
-          onPressed: () {
-            setState(() {
-              _isFavorite = !_isFavorite;
-            });
-            // TODO: Guardar en favoritos en Supabase
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  _isFavorite
-                      ? '❤️ Agregado a favoritos'
-                      : '💔 Eliminado de favoritos',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: _toggleFavorite,
         ),
       ],
     );
@@ -307,7 +333,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           ),
         },
         onMapCreated: (controller) {
-          _mapController = controller;
+          // Map controller configurado
         },
         myLocationEnabled: true,
         myLocationButtonEnabled: true,
@@ -514,7 +540,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   }
 
   Widget _buildReviewsSection() {
-    // TODO: Obtener reviews de Supabase
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -523,41 +548,341 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         border: Border.all(color: AppColors.primary.withOpacity(0.3)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(
-                Icons.chat_bubble_outline,
-                color: AppColors.textSecondary,
+              Row(
+                children: [
+                  const Icon(
+                    Icons.chat_bubble_outline,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Opiniones (${_reviews.length})',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Aún no hay opiniones de este lugar',
-                style: TextStyle(
-                  color: AppColors.textSecondary.withOpacity(0.7),
-                  fontStyle: FontStyle.italic,
+              TextButton.icon(
+                onPressed: _showAddReviewDialog,
+                icon: const Icon(Icons.rate_review, size: 18),
+                label: const Text('Opinar'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_reviews.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Aún no hay opiniones.\n¡Sé el primero en opinar!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            )
+          else
+            ..._reviews.map((review) => _buildReviewCard(review)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(Map<String, dynamic> review) {
+    final rating = review['rating'] as int? ?? 0;
+    final comment = review['comment'] as String? ?? '';
+    final username = review['users']?['username'] as String? ?? 'Usuario';
+    final createdAt = DateTime.tryParse(review['created_at'] ?? '');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    child: Text(
+                      username[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    username,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: List.generate(
+                  5,
+                  (index) => Icon(
+                    index < rating ? Icons.star : Icons.star_border,
+                    color: AppColors.secondary,
+                    size: 16,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Abrir modal para escribir opinión
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Próximamente: Escribe tu opinión'),
-                ),
-              );
-            },
-            icon: const Icon(Icons.rate_review, size: 18),
-            label: const Text('Sé el primero en opinar'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
+          const SizedBox(height: 8),
+          Text(
+            comment,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
             ),
           ),
+          if (createdAt != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              _formatDate(createdAt),
+              style: TextStyle(
+                color: AppColors.textSecondary.withOpacity(0.5),
+                fontSize: 12,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Hoy';
+    } else if (difference.inDays == 1) {
+      return 'Ayer';
+    } else if (difference.inDays < 7) {
+      return 'Hace ${difference.inDays} días';
+    } else if (difference.inDays < 30) {
+      return 'Hace ${(difference.inDays / 7).floor()} semanas';
+    } else {
+      return 'Hace ${(difference.inDays / 30).floor()} meses';
+    }
+  }
+
+  void _showAddReviewDialog() {
+    int selectedRating = 5;
+    final commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(width: 2),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.3),
+                  AppColors.secondary.withOpacity(0.3),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ícono con anillo neon
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.5),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.rate_review,
+                    color: AppColors.primary,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Título
+                const Text(
+                  'Escribe tu opinión',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Ayuda a otros usuarios con tu experiencia',
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                // Rating
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => IconButton(
+                      onPressed: () {
+                        setDialogState(() => selectedRating = index + 1);
+                      },
+                      icon: Icon(
+                        index < selectedRating ? Icons.star : Icons.star_border,
+                        color: AppColors.secondary,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Campo de texto
+                TextField(
+                  controller: commentController,
+                  maxLines: 4,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Cuéntanos tu experiencia...',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary.withOpacity(0.5),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Botones
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (commentController.text.trim().isEmpty) {
+                          return;
+                        }
+
+                        Navigator.pop(context);
+
+                        final success = await _userPlacesService.addReview(
+                          placeId: widget.place.id,
+                          placeName: widget.place.name,
+                          rating: selectedRating,
+                          comment: commentController.text.trim(),
+                        );
+
+                        if (mounted) {
+                          if (success) {
+                            await _loadReviews();
+                            NeonAlertDialog.show(
+                              context: context,
+                              icon: Icons.check_circle,
+                              title: '¡Gracias!',
+                              message:
+                                  'Tu opinión se ha publicado correctamente',
+                            );
+                          } else {
+                            NeonAlertDialog.show(
+                              context: context,
+                              icon: Icons.error_outline,
+                              title: 'Error',
+                              message: 'No se pudo publicar tu opinión',
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Publicar'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -661,39 +986,115 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     }
   }
 
-  void _toggleVisited() {
-    setState(() {
-      _isVisited = !_isVisited;
-    });
+  Future<void> _toggleFavorite() async {
+    final newState = !_isFavorite;
 
-    // TODO: Guardar en Supabase tabla visited_places
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isVisited ? '✅ Marcado como visitado' : 'Desmarcado como visitado',
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    setState(() => _isFavorite = newState);
+
+    bool success;
+    if (newState) {
+      success = await _userPlacesService.addToFavorites(
+        widget.place.id,
+        widget.place.name,
+      );
+    } else {
+      success = await _userPlacesService.removeFromFavorites(widget.place.id);
+    }
+
+    if (mounted) {
+      if (success) {
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.favorite,
+          title: newState ? 'Agregado a favoritos' : 'Eliminado de favoritos',
+          message: newState
+              ? '${widget.place.name} se guardó en tus favoritos'
+              : '${widget.place.name} se eliminó de favoritos',
+        );
+      } else {
+        setState(() => _isFavorite = !newState);
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.error_outline,
+          title: 'Error',
+          message: 'No se pudo actualizar favoritos',
+        );
+      }
+    }
   }
 
-  void _toggleBlockPlace() {
-    setState(() {
-      _isBlocked = !_isBlocked;
-    });
+  Future<void> _toggleVisited() async {
+    final newState = !_isVisited;
 
-    // TODO: Guardar en Supabase tabla blocked_locations
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isBlocked
-              ? '🚫 Este lugar no se recomendará más'
-              : 'Lugar desbloqueado',
-        ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: _isBlocked ? Colors.red : null,
-      ),
-    );
+    setState(() => _isVisited = newState);
+
+    bool success;
+    if (newState) {
+      success = await _userPlacesService.markAsVisited(
+        widget.place.id,
+        widget.place.name,
+      );
+    } else {
+      success = await _userPlacesService.unmarkAsVisited(widget.place.id);
+    }
+
+    if (mounted) {
+      if (success) {
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.check_circle_outline,
+          title: newState ? '¡Lugar visitado!' : 'Visita desmarcada',
+          message: newState
+              ? 'Agregamos ${widget.place.name} a tu historial'
+              : '${widget.place.name} se eliminó del historial',
+        );
+      } else {
+        setState(() => _isVisited = !newState);
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.error_outline,
+          title: 'Error',
+          message: 'No se pudo actualizar el estado',
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleBlockPlace() async {
+    final newState = !_isBlocked;
+
+    setState(() => _isBlocked = newState);
+
+    bool success;
+    if (newState) {
+      success = await _userPlacesService.blockPlace(
+        widget.place.id,
+        widget.place.name,
+      );
+    } else {
+      success = await _userPlacesService.unblockPlace(widget.place.id);
+    }
+
+    if (mounted) {
+      if (success) {
+        NeonAlertDialog.show(
+          context: context,
+          icon: newState ? Icons.block : Icons.check_circle,
+          title: newState ? 'Lugar bloqueado' : 'Lugar desbloqueado',
+          message: newState
+              ? 'No volverás a ver ${widget.place.name} en las recomendaciones'
+              : '${widget.place.name} volvió a las recomendaciones',
+        );
+      } else {
+        setState(() => _isBlocked = !newState);
+        NeonAlertDialog.show(
+          context: context,
+          icon: Icons.error_outline,
+          title: 'Error',
+          message: 'No se pudo actualizar el estado',
+        );
+      }
+    }
   }
 
   Future<void> _makePhoneCall() async {
@@ -726,12 +1127,5 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         );
       }
     }
-  }
-
-  Future<void> _sharePlace() async {
-    // TODO: Implementar compartir con share_plus package
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Compartir: ${widget.place.name}')));
   }
 }
