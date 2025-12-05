@@ -24,12 +24,7 @@ void main() async {
   // Inicializar AdMob
   await AdService().initialize();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => SettingsProvider(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -37,68 +32,82 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+    return ChangeNotifierProvider(
+      create: (_) => SettingsProvider(),
+      child: const AppContent(),
+    );
+  }
+}
 
-    return MaterialApp(
-      title: '¿A Dónde Vamos?',
-      debugShowCheckedModeBanner: false,
+class AppContent extends StatelessWidget {
+  const AppContent({super.key});
 
-      // Tema
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: settingsProvider.themeMode,
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settingsProvider, child) {
+        return MaterialApp(
+          title: '¿A Dónde Vamos?',
+          debugShowCheckedModeBanner: false,
 
-      // Localización
-      locale: settingsProvider.locale,
-      supportedLocales: const [
-        Locale('es', 'MX'), // México
-        Locale('en', 'US'), // English
-        Locale('es', 'ES'), // España
-        Locale('es', 'AR'), // Argentina
-        Locale('es', 'CL'), // Chile
-        Locale('es', 'CO'), // Colombia
-        Locale('es', 'PE'), // Perú
-        Locale('es', 'VE'), // Venezuela
-        Locale('es', 'EC'), // Ecuador
-        Locale('es', 'BO'), // Bolivia
-        Locale('es', 'PY'), // Paraguay
-        Locale('es', 'UY'), // Uruguay
-        Locale('es', 'CR'), // Costa Rica
-        Locale('es', 'PA'), // Panamá
-        Locale('es', 'CU'), // Cuba
-        Locale('es', 'DO'), // República Dominicana
-        Locale('es', 'PR'), // Puerto Rico
-        Locale('es', 'GT'), // Guatemala
-        Locale('es', 'HN'), // Honduras
-        Locale('es', 'SV'), // El Salvador
-        Locale('es', 'NI'), // Nicaragua
-      ],
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+          // Tema
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: settingsProvider.themeMode,
 
-      initialRoute: AppRoutes.splash,
-      routes: {
-        AppRoutes.splash: (context) => const SplashScreen(),
-        AppRoutes.auth: (context) => const AuthScreen(),
-        AppRoutes.home: (context) => const HomeScreen(),
-        AppRoutes.premium: (context) => const PremiumScreen(),
-        '/settings': (context) => const SettingsScreen(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == AppRoutes.placeDetail) {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (context) => PlaceDetailScreen(
-              place: args['place'] as LocationModel,
-              distanceInMeters: args['distance'] as double,
-            ),
-          );
-        }
-        return null;
+          // Localización
+          locale: settingsProvider.locale,
+          supportedLocales: const [
+            Locale('es', 'MX'), // México
+            Locale('en', 'US'), // English
+            Locale('es', 'ES'), // España
+            Locale('es', 'AR'), // Argentina
+            Locale('es', 'CL'), // Chile
+            Locale('es', 'CO'), // Colombia
+            Locale('es', 'PE'), // Perú
+            Locale('es', 'VE'), // Venezuela
+            Locale('es', 'EC'), // Ecuador
+            Locale('es', 'BO'), // Bolivia
+            Locale('es', 'PY'), // Paraguay
+            Locale('es', 'UY'), // Uruguay
+            Locale('es', 'CR'), // Costa Rica
+            Locale('es', 'PA'), // Panamá
+            Locale('es', 'CU'), // Cuba
+            Locale('es', 'DO'), // República Dominicana
+            Locale('es', 'PR'), // Puerto Rico
+            Locale('es', 'GT'), // Guatemala
+            Locale('es', 'HN'), // Honduras
+            Locale('es', 'SV'), // El Salvador
+            Locale('es', 'NI'), // Nicaragua
+          ],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+
+          initialRoute: AppRoutes.splash,
+          routes: {
+            AppRoutes.splash: (context) => const SplashScreen(),
+            AppRoutes.auth: (context) => const AuthScreen(),
+            AppRoutes.home: (context) => const HomeScreen(),
+            AppRoutes.premium: (context) => const PremiumScreen(),
+            '/settings': (context) => const SettingsScreen(),
+          },
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.placeDetail) {
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) => PlaceDetailScreen(
+                  place: args['place'] as LocationModel,
+                  distanceInMeters: args['distance'] as double,
+                ),
+              );
+            }
+            return null;
+          },
+        );
       },
     );
   }
