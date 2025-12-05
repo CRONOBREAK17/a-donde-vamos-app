@@ -1,6 +1,7 @@
 // lib/presentation/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import 'dashboard_screen.dart';
 import 'history_screen.dart';
 import 'favorites_screen.dart';
@@ -29,6 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -42,22 +45,31 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explorar'),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Historial',
+            icon: const Icon(Icons.explore),
+            label: l10n.translate('explore'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoritos',
+            icon: const Icon(Icons.history),
+            label: l10n.translate('history'),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Amigos'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events),
-            label: 'Ranking',
+            icon: const Icon(Icons.favorite),
+            label: l10n.translate('favorites'),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.people),
+            label: l10n.translate('friends'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.emoji_events),
+            label: l10n.translate('ranking'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: l10n.translate('profile'),
+          ),
         ],
       ),
     );

@@ -95,27 +95,29 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+      scaffoldBackgroundColor: AppColors.backgroundLight,
       primaryColor: AppColors.primary,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
-        surface: Colors.white,
-        background: Color(0xFFF5F5F5),
+        surface: AppColors.cardBackgroundLight,
+        background: AppColors.backgroundLight,
         error: AppColors.error,
       ),
 
       // AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        elevation: 0,
+        backgroundColor: AppColors.cardBackgroundLight,
+        elevation: 2,
         centerTitle: true,
-        foregroundColor: Colors.black87,
+        foregroundColor: AppColors.textPrimaryLight,
+        shadowColor: Colors.black26,
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: AppColors.textPrimaryLight,
         ),
+        iconTheme: IconThemeData(color: AppColors.textPrimaryLight),
       ),
 
       // Botones
@@ -127,55 +129,71 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
           ),
-          elevation: 5,
+          elevation: 3,
+          shadowColor: AppColors.primary.withOpacity(0.4),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
 
       // Cards
       cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 2,
+        color: AppColors.cardBackgroundLight,
+        elevation: 3,
+        shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
-          side: BorderSide(color: Colors.grey.shade300, width: 1),
+          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
       ),
 
       // Input fields
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.cardBackgroundLight,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E0), width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
-        labelStyle: TextStyle(color: Colors.grey.shade700),
-        hintStyle: TextStyle(color: Colors.grey.shade500),
+        labelStyle: const TextStyle(color: AppColors.textSecondaryLight),
+        hintStyle: const TextStyle(color: AppColors.textMutedLight),
       ),
 
       // Texto
-      textTheme: TextTheme(
-        displayLarge: const TextStyle(
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: AppColors.textPrimaryLight,
         ),
-        displayMedium: const TextStyle(
+        displayMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: AppColors.textPrimaryLight,
         ),
-        bodyLarge: const TextStyle(fontSize: 16, color: Colors.black87),
-        bodyMedium: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+        bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimaryLight),
+        bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight),
+      ),
+
+      // Navegación
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.cardBackgroundLight,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textMutedLight,
+        elevation: 8,
+        type: BottomNavigationBarType.fixed,
+      ),
+
+      // Icons
+      iconTheme: const IconThemeData(
+        color: AppColors.textPrimaryLight,
       ),
     );
   }
