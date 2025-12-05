@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/localization/app_localizations.dart';
 import '../../data/services/location_service.dart';
 import '../../data/services/places_service.dart';
 import '../../data/services/user_places_service.dart';
@@ -323,13 +322,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.settings, size: 26),
-          onPressed: () {
-            Navigator.pushNamed(context, '/settings');
-          },
-          tooltip: 'Ajustes',
-        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
