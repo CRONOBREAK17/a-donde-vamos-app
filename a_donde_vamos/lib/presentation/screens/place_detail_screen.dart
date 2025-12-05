@@ -220,7 +220,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                         color: AppColors.primary, size: 18),
                     const SizedBox(width: 4),
                     Text(
-                      widget.place.distanceDisplay(widget.distanceInMeters),
+                      widget.place.formatDistance(widget.distanceInMeters),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,

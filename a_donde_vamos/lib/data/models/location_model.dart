@@ -97,7 +97,7 @@ class LocationModel {
   }
 
   // Método para formatear distancia desde metros
-  String distanceDisplay(double distanceInMeters) {
+  String formatDistance(double distanceInMeters) {
     if (distanceInMeters < 1000) {
       return '${distanceInMeters.toStringAsFixed(0)} m';
     } else {
