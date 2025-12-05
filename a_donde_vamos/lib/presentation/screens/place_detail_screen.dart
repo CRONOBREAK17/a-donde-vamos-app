@@ -134,11 +134,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     return Container(
       color: AppColors.cardBackground,
       child: const Center(
-        child: Icon(
-          Icons.restaurant,
-          size: 100,
-          color: AppColors.primary,
-        ),
+        child: Icon(Icons.restaurant, size: 100, color: AppColors.primary),
       ),
     );
   }
@@ -164,8 +160,10 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             children: [
               if (widget.place.rating != null) ...[
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(20),
@@ -189,8 +187,10 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               ],
               if (widget.place.priceLevel != null) ...[
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(20),
@@ -206,8 +206,10 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 const SizedBox(width: 12),
               ],
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(20),
@@ -216,8 +218,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on,
-                        color: AppColors.primary, size: 18),
+                    const Icon(
+                      Icons.location_on,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       widget.place.formatDistance(widget.distanceInMeters),
@@ -358,18 +363,12 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
           // Botón de llamar
           if (widget.place.phoneNumber != null)
-            _buildCircularButton(
-              icon: Icons.phone,
-              onPressed: _makePhoneCall,
-            ),
+            _buildCircularButton(icon: Icons.phone, onPressed: _makePhoneCall),
 
           const SizedBox(width: 12),
 
           // Botón de compartir
-          _buildCircularButton(
-            icon: Icons.share,
-            onPressed: _sharePlace,
-          ),
+          _buildCircularButton(icon: Icons.share, onPressed: _sharePlace),
         ],
       ),
     );
@@ -457,9 +456,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         decoration: BoxDecoration(
           color: AppColors.cardBackground.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
-          ),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -551,10 +548,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
   Future<void> _sharePlace() async {
     // TODO: Implementar compartir con share_plus package
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Compartir: ${widget.place.name}'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Compartir: ${widget.place.name}')));
   }
 }
