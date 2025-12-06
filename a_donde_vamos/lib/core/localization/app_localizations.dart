@@ -17,8 +17,16 @@ class AppLocalizations {
     _localizedStrings = _getTranslations(locale);
   }
 
-  static AppLocalizations of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  // Helper para obtener con fallback
+  static AppLocalizations getLocale(BuildContext context) {
+    final loc = Localizations.of<AppLocalizations>(context, AppLocalizations);
+    if (loc != null) return loc;
+    // Fallback a español México si no hay localización
+    return AppLocalizations(const Locale('es', 'MX'));
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =

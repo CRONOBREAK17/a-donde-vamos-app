@@ -11,7 +11,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.getLocale(context);
     final languageService = Provider.of<LanguageService>(context);
 
     return Scaffold(
@@ -128,7 +128,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showLanguageSelector(BuildContext context) {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.getLocale(context);
     final languageService = Provider.of<LanguageService>(
       context,
       listen: false,
