@@ -8,7 +8,6 @@ import '../widgets/rank_profile_picture.dart';
 import '../widgets/neon_alert_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
 import 'achievements_screen.dart';
-import 'settings_screen.dart';
 import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
@@ -445,16 +444,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('👤 Mi Perfil'),
         backgroundColor: AppColors.cardBackground,
-        leading: IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            );
-          },
-          tooltip: 'Ajustes',
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

@@ -1,5 +1,5 @@
-// lib/core/localization/languages/es_pe.dart
-const Map<String, String> esPE = {
+// lib/core/localization/languages/es_mx.dart
+const Map<String, String> esMX = {
   'app_name': 'A Dónde Vamos',
 
   // Bottom Navigation
