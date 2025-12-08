@@ -85,7 +85,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final progress = RankUtils.getProgressToNextRank(_activityPoints);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(_username),
         backgroundColor: AppColors.cardBackground,

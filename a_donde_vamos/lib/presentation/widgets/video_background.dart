@@ -63,28 +63,27 @@ class _VideoBackgroundState extends State<VideoBackground> {
 
     return Stack(
       children: [
-        // Video de fondo (solo para Leyenda Cósmica)
+        // Fondo: Video para Leyenda Cósmica, negro para otros
+        Positioned.fill(
+          child: showVideo && _isInitialized
+              ? FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _controller.value.size.width,
+                    height: _controller.value.size.height,
+                    child: VideoPlayer(_controller),
+                  ),
+                )
+              : Container(
+                  color: const Color(0xFF0A0E27),
+                ), // Fondo oscuro por defecto
+        ),
+
+        // Overlay semi-transparente solo si hay video (para legibilidad)
         if (showVideo && _isInitialized)
           Positioned.fill(
-            child: Opacity(
-              opacity: widget.opacity,
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
-                ),
-              ),
-            ),
+            child: Container(color: Colors.black.withOpacity(widget.opacity)),
           ),
-
-        // Overlay oscuro para mejor legibilidad (más oscuro si hay video)
-        Positioned.fill(
-          child: Container(
-            color: Colors.black.withOpacity(showVideo ? 0.4 : 0.0),
-          ),
-        ),
 
         // Contenido principal
         widget.child,

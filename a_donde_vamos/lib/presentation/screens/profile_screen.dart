@@ -442,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final progress = RankUtils.getProgressToNextRank(_activityPoints);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('👤 Mi Perfil'),
         backgroundColor: AppColors.cardBackground,
