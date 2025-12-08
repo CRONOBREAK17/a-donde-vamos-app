@@ -31,7 +31,7 @@ class _RankingScreenState extends State<RankingScreen> {
     try {
       final response = await _supabase
           .from('users')
-          .select('id, username, profile_picture, activity_points')
+          .select('id, username, profile_picture, activity_points, is_premium')
           .order('activity_points', ascending: false)
           .limit(_limit);
 
@@ -200,13 +200,19 @@ class _RankingScreenState extends State<RankingScreen> {
             ),
           ],
         ),
-        title: Text(
-          username,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+        title: Row(
+          children: [
+            Text(
+              username,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildPremiumBadge(user['is_premium'] as bool? ?? false),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,5 +256,61 @@ class _RankingScreenState extends State<RankingScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildPremiumBadge(bool isPremium) {
+    if (isPremium) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFD700).withOpacity(0.3),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star, size: 10, color: Colors.black),
+            SizedBox(width: 3),
+            Text(
+              'PREMIUM',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.textMuted.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
+        ),
+        child: const Text(
+          'GRATUITO',
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+    }
   }
 }

@@ -143,7 +143,7 @@ class FriendshipService {
       final response = await _supabase
           .from('user_friends')
           .select(
-            'id, created_at, sender:users!user_friends_user_id_fkey(id, username, profile_picture, activity_points)',
+            'id, created_at, sender:users!user_friends_user_id_fkey(id, username, profile_picture, activity_points, is_premium)',
           )
           .eq('friend_id', user.id)
           .eq('status', statusPending)
@@ -165,7 +165,7 @@ class FriendshipService {
       final response = await _supabase
           .from('user_friends')
           .select(
-            'id, created_at, receiver:users!user_friends_friend_id_fkey(id, username, profile_picture, activity_points)',
+            'id, created_at, receiver:users!user_friends_friend_id_fkey(id, username, profile_picture, activity_points, is_premium)',
           )
           .eq('user_id', user.id)
           .eq('status', statusPending)
@@ -187,7 +187,7 @@ class FriendshipService {
       final response = await _supabase
           .from('user_friends')
           .select(
-            'friend:users!user_friends_friend_id_fkey(id, username, profile_picture, activity_points)',
+            'friend:users!user_friends_friend_id_fkey(id, username, profile_picture, activity_points, is_premium)',
           )
           .eq('user_id', user.id)
           .eq('status', statusAccepted)
@@ -278,7 +278,7 @@ class FriendshipService {
 
       final response = await _supabase
           .from('users')
-          .select('id, username, profile_picture, activity_points')
+          .select('id, username, profile_picture, activity_points, is_premium')
           .neq('id', user.id) // Excluir usuario actual
           .ilike('username', '%$query%')
           .limit(20);

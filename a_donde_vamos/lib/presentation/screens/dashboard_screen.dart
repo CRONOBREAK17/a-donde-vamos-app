@@ -897,24 +897,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: AppColors.secondary.withOpacity(0.3),
+                color: hasSearchesLeft
+                    ? AppColors.secondary.withOpacity(0.3)
+                    : Colors.transparent,
                 blurRadius: 15,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
+            onPressed: hasSearchesLeft
+                ? () {
+                    setState(() {
+                      _showFilters = !_showFilters;
+                    });
+                  }
+                : _showPremiumModal,
             icon: Icon(
               _showFilters ? Icons.filter_list_off : Icons.filter_list,
             ),
-            label: Text(_showFilters ? 'Ocultar Filtros' : 'Filtros'),
+            label: Text(
+              hasSearchesLeft
+                  ? (_showFilters ? 'Ocultar Filtros' : 'Filtros')
+                  : '🔒 Filtros bloqueados',
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
+              backgroundColor: hasSearchesLeft
+                  ? AppColors.secondary
+                  : AppColors.textMuted,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -1074,6 +1084,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String filterType = 'type',
     String? emoji,
   }) {
+    final hasSearchesLeft = _isPremium || _dailySearchesUsed < _maxFreeSearches;
+
     bool isSelected;
     switch (filterType) {
       case 'time':
@@ -1087,89 +1099,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return InkWell(
-      onTap: () {
-        setState(() {
-          switch (filterType) {
-            case 'time':
-              _selectedTimeOfDay = value;
-              break;
-            case 'company':
-              _selectedCompany = value;
-              break;
-            default:
-              _selectedType = value;
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.primary.withOpacity(0.3),
-            width: 1.5,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null)
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            if (icon != null) const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            if (emoji != null) ...[
-              const SizedBox(width: 6),
-              Text(emoji, style: const TextStyle(fontSize: 16)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadiusChip(String label, double km) {
-    final isSelected = _searchRadius == km;
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _searchRadius = km;
-          });
-        },
+      onTap: hasSearchesLeft
+          ? () {
+              setState(() {
+                switch (filterType) {
+                  case 'time':
+                    _selectedTimeOfDay = value;
+                    break;
+                  case 'company':
+                    _selectedCompany = value;
+                    break;
+                  default:
+                    _selectedType = value;
+                }
+              });
+            }
+          : null,
+      child: Opacity(
+        opacity: hasSearchesLeft ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(20),
+            color: hasSearchesLeft
+                ? (isSelected ? AppColors.primary : AppColors.cardBackground)
+                : AppColors.textMuted.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(25),
             border: Border.all(
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.primary.withOpacity(0.3),
+              color: hasSearchesLeft
+                  ? (isSelected
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.3))
+                  : AppColors.textMuted.withOpacity(0.5),
               width: 1.5,
             ),
-            boxShadow: isSelected
+            boxShadow: (isSelected && hasSearchesLeft)
                 ? [
                     BoxShadow(
                       color: AppColors.primary.withOpacity(0.4),
@@ -1179,13 +1142,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ]
                 : null,
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 16,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null)
+                Icon(
+                  icon,
+                  size: 18,
+                  color: hasSearchesLeft
+                      ? (isSelected ? Colors.white : AppColors.textSecondary)
+                      : AppColors.textMuted,
+                ),
+              if (icon != null) const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: hasSearchesLeft
+                      ? (isSelected ? Colors.white : AppColors.textSecondary)
+                      : AppColors.textMuted,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              if (emoji != null) ...[
+                const SizedBox(width: 6),
+                Text(emoji, style: const TextStyle(fontSize: 16)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadiusChip(String label, double km) {
+    final hasSearchesLeft = _isPremium || _dailySearchesUsed < _maxFreeSearches;
+    final isSelected = _searchRadius == km;
+    return Expanded(
+      child: InkWell(
+        onTap: hasSearchesLeft
+            ? () {
+                setState(() {
+                  _searchRadius = km;
+                });
+              }
+            : null,
+        child: Opacity(
+          opacity: hasSearchesLeft ? 1.0 : 0.5,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: hasSearchesLeft
+                  ? (isSelected ? AppColors.primary : AppColors.cardBackground)
+                  : AppColors.textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: hasSearchesLeft
+                    ? (isSelected
+                          ? AppColors.primary
+                          : AppColors.primary.withOpacity(0.3))
+                    : AppColors.textMuted.withOpacity(0.5),
+                width: 1.5,
+              ),
+              boxShadow: (isSelected && hasSearchesLeft)
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: hasSearchesLeft
+                      ? (isSelected ? Colors.white : AppColors.textSecondary)
+                      : AppColors.textMuted,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),

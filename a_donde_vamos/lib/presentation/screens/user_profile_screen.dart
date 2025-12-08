@@ -19,6 +19,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = true;
+  bool _isPremium = false;
   String _username = '';
   String _description = '';
   int _activityPoints = 0;
@@ -36,7 +37,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Cargar datos del usuario
       final response = await _supabase
           .from('users')
-          .select('username, description, activity_points, profile_picture')
+          .select(
+            'username, description, activity_points, profile_picture, is_premium',
+          )
           .eq('id', widget.userId)
           .single();
 
@@ -54,6 +57,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _description = response['description'] as String? ?? '';
         _activityPoints = response['activity_points'] as int? ?? 0;
         _profilePicture = response['profile_picture'] as String?;
+        _isPremium = response['is_premium'] as bool? ?? false;
         _badges = List<Map<String, dynamic>>.from(badgesResponse);
         _isLoading = false;
       });
@@ -108,6 +112,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
+            const SizedBox(height: 8),
+
+            // Etiqueta Premium/Gratuito
+            _buildPremiumBadge(),
 
             const SizedBox(height: 8),
 
@@ -371,5 +380,72 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildPremiumBadge() {
+    if (_isPremium) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFD700).withOpacity(0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star, size: 16, color: Colors.black),
+            SizedBox(width: 6),
+            Text(
+              'PREMIUM',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.textMuted.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppColors.textMuted.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.label, size: 14, color: AppColors.textMuted),
+            SizedBox(width: 6),
+            Text(
+              'GRATUITO',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

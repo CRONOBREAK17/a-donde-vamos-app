@@ -476,13 +476,21 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    username,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        username,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _buildPremiumBadge(
+                        receiver['is_premium'] as bool? ?? false,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -522,5 +530,61 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildPremiumBadge(bool isPremium) {
+    if (isPremium) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFD700).withOpacity(0.3),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star, size: 9, color: Colors.black),
+            SizedBox(width: 3),
+            Text(
+              'PREMIUM',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.textMuted.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
+        ),
+        child: const Text(
+          'GRATUITO',
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+    }
   }
 }
