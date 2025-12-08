@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/rank_utils.dart';
 import '../widgets/rank_profile_picture.dart';
+import '../widgets/video_background.dart';
 import 'achievements_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -89,127 +90,70 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         title: Text(_username),
         backgroundColor: AppColors.cardBackground,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
+      body: VideoBackground(
+        activityPoints: _activityPoints,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
 
-            // Foto de perfil con animación de rango
-            RankProfilePicture(
-              imageUrl: _profilePicture,
-              activityPoints: _activityPoints,
-              size: 150,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Nombre de usuario
-            Text(
-              _username,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
+              // Foto de perfil con animación de rango
+              RankProfilePicture(
+                imageUrl: _profilePicture,
+                activityPoints: _activityPoints,
+                size: 150,
               ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 20),
 
-            // Etiqueta Premium/Gratuito
-            _buildPremiumBadge(),
-
-            const SizedBox(height: 8),
-
-            // Rango
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: rankInfo.color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: rankInfo.color, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: rankInfo.color.withOpacity(0.3),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Text(
-                rankInfo.title,
-                style: TextStyle(
-                  color: rankInfo.color,
-                  fontSize: 16,
+              // Nombre de usuario
+              Text(
+                _username,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 8),
 
-            // Puntos de actividad
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: rankInfo.color.withOpacity(0.5),
-                  width: 2,
+              // Etiqueta Premium/Gratuito
+              _buildPremiumBadge(),
+
+              const SizedBox(height: 8),
+
+              // Rango
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '⭐ Puntos de actividad',
-                        style: TextStyle(
-                          color: rankInfo.color,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '$_activityPoints pts',
-                        style: TextStyle(
-                          color: rankInfo.color,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (nextRank != null) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.grey[800],
-                        color: rankInfo.color,
-                        minHeight: 8,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'Siguiente: ${nextRank.title} (${nextRank.minPoints} pts)',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
+                decoration: BoxDecoration(
+                  color: rankInfo.color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: rankInfo.color, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: rankInfo.color.withOpacity(0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
                     ),
                   ],
-                ],
+                ),
+                child: Text(
+                  rankInfo.title,
+                  style: TextStyle(
+                    color: rankInfo.color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Biografía
-            if (_description.isNotEmpty)
+              // Puntos de actividad
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 padding: const EdgeInsets.all(16),
@@ -217,166 +161,233 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   color: AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: rankInfo.color.withOpacity(0.3),
+                    color: rankInfo.color.withOpacity(0.5),
                     width: 2,
                   ),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '📝 Biografía',
-                      style: TextStyle(
-                        color: rankInfo.color,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _description,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            const SizedBox(height: 20),
-
-            // Botón para ver logros
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              width: double.infinity,
-              height: 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    rankInfo.color.withOpacity(0.3),
-                    rankInfo.color.withOpacity(0.15),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: rankInfo.color.withOpacity(0.5),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: rankInfo.color.withOpacity(0.2),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            AchievementsScreen(
-                              badges: _badges,
-                              activityPoints: _activityPoints,
-                            ),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                              const begin = Offset(1.0, 0.0);
-                              const end = Offset.zero;
-                              const curve = Curves.easeInOut;
-
-                              var tween = Tween(
-                                begin: begin,
-                                end: end,
-                              ).chain(CurveTween(curve: curve));
-                              var offsetAnimation = animation.drive(tween);
-
-                              return SlideTransition(
-                                position: offsetAnimation,
-                                child: child,
-                              );
-                            },
-                      ),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Icono
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [const Color(0xFFFFD700), rankInfo.color],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: rankInfo.color.withOpacity(0.4),
-                                blurRadius: 12,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.emoji_events,
-                            size: 32,
-                            color: Colors.white,
+                        Text(
+                          '⭐ Puntos de actividad',
+                          style: TextStyle(
+                            color: rankInfo.color,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 15),
-
-                        // Texto
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                '🏆 Ver Logros',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${_badges.length} ${_badges.length == 1 ? "logro" : "logros"}',
-                                style: TextStyle(
-                                  color: AppColors.textMuted.withOpacity(0.9),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                        Text(
+                          '$_activityPoints pts',
+                          style: TextStyle(
+                            color: rankInfo.color,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-
-                        // Flecha
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: rankInfo.color.withOpacity(0.7),
-                          size: 20,
                         ),
                       ],
                     ),
+                    if (nextRank != null) ...[
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.grey[800],
+                          color: rankInfo.color,
+                          minHeight: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Siguiente: ${nextRank.title} (${nextRank.minPoints} pts)',
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Biografía
+              if (_description.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: rankInfo.color.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '📝 Biografía',
+                        style: TextStyle(
+                          color: rankInfo.color,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _description,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // Botón para ver logros
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                width: double.infinity,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      rankInfo.color.withOpacity(0.3),
+                      rankInfo.color.withOpacity(0.15),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: rankInfo.color.withOpacity(0.5),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: rankInfo.color.withOpacity(0.2),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  AchievementsScreen(
+                                    badges: _badges,
+                                    activityPoints: _activityPoints,
+                                  ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                const begin = Offset(1.0, 0.0);
+                                const end = Offset.zero;
+                                const curve = Curves.easeInOut;
+
+                                var tween = Tween(
+                                  begin: begin,
+                                  end: end,
+                                ).chain(CurveTween(curve: curve));
+                                var offsetAnimation = animation.drive(tween);
+
+                                return SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          // Icono
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFFFD700),
+                                  rankInfo.color,
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: rankInfo.color.withOpacity(0.4),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.emoji_events,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+
+                          // Texto
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  '🏆 Ver Logros',
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_badges.length} ${_badges.length == 1 ? "logro" : "logros"}',
+                                  style: TextStyle(
+                                    color: AppColors.textMuted.withOpacity(0.9),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Flecha
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: rankInfo.color.withOpacity(0.7),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 30),
-          ],
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );

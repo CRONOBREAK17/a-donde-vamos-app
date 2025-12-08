@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 /// Widget que reproduce un video en loop como fondo de pantalla
+/// Solo se muestra si activityPoints >= 1000 (Leyenda Cósmica)
 class VideoBackground extends StatefulWidget {
   final Widget child;
+  final int activityPoints;
   final String videoPath;
   final double opacity;
 
   const VideoBackground({
     super.key,
     required this.child,
-    this.videoPath = 'assets/videos/background.mp4',
-    this.opacity = 0.3,
+    required this.activityPoints,
+    this.videoPath = 'assets/videos/Fondo_De_Pantalla_Neon_Rayos_leyenda.mp4',
+    this.opacity = 0.4,
   });
 
   @override
@@ -55,10 +58,13 @@ class _VideoBackgroundState extends State<VideoBackground> {
 
   @override
   Widget build(BuildContext context) {
+    // Solo mostrar video si es Leyenda Cósmica (1000+ puntos)
+    final showVideo = widget.activityPoints >= 1000;
+
     return Stack(
       children: [
-        // Video de fondo
-        if (_isInitialized)
+        // Video de fondo (solo para Leyenda Cósmica)
+        if (showVideo && _isInitialized)
           Positioned.fill(
             child: Opacity(
               opacity: widget.opacity,
@@ -73,10 +79,10 @@ class _VideoBackgroundState extends State<VideoBackground> {
             ),
           ),
 
-        // Overlay oscuro para mejor legibilidad
+        // Overlay oscuro para mejor legibilidad (más oscuro si hay video)
         Positioned.fill(
           child: Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withOpacity(showVideo ? 0.4 : 0.0),
           ),
         ),
 
