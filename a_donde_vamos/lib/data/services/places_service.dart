@@ -13,7 +13,7 @@ class PlacesService {
   Future<LocationModel?> findRandomPlace({
     required double latitude,
     required double longitude,
-    required String placeType, // 'restaurant', 'cafe', 'bar'
+    required String placeType, // 'restaurant', 'cafe', 'bar', 'random'
     required double radiusInKm,
     List<String>? excludedPlaceIds, // IDs de lugares a excluir
   }) async {
@@ -21,9 +21,16 @@ class PlacesService {
       // Convertir km a metros
       int radiusInMeters = (radiusInKm * 1000).round();
 
+      // Si es búsqueda completamente aleatoria, elegir un tipo aleatorio
+      String searchType = placeType;
+      if (placeType == 'random') {
+        final randomTypes = ['restaurant', 'cafe', 'bar'];
+        searchType = randomTypes[Random().nextInt(randomTypes.length)];
+      }
+
       // Construir URL de búsqueda
       final url = Uri.parse(
-        '$_baseUrl/nearbysearch/json?location=$latitude,$longitude&radius=$radiusInMeters&type=$placeType&key=$_apiKey',
+        '$_baseUrl/nearbysearch/json?location=$latitude,$longitude&radius=$radiusInMeters&type=$searchType&key=$_apiKey',
       );
 
       // Hacer petición

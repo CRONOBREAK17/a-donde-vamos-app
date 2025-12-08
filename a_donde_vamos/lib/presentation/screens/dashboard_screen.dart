@@ -37,6 +37,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedTimeOfDay = 'anytime';
   String _selectedCompany = 'anyone';
   bool _isPremium = false;
+  int _dailyFilterSearchesUsed = 0;
+  int _maxFreeFilterSearches = 3;
 
   Position? _currentPosition;
   LocationModel? _persistentPlace; // Lugar que permanece visible
@@ -60,13 +62,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (user != null) {
         final response = await _supabase
             .from('users')
-            .select('is_premium')
+            .select(
+              'is_premium, daily_filter_searches_used, last_filter_search_reset',
+            )
             .eq('id', user.id)
             .single();
 
-        setState(() {
-          _isPremium = response['is_premium'] ?? false;
-        });
+        final isPremium = response['is_premium'] ?? false;
+        final searchesUsed = response['daily_filter_searches_used'] ?? 0;
+        final lastReset = response['last_filter_search_reset'] != null
+            ? DateTime.parse(response['last_filter_search_reset'])
+            : DateTime.now();
+
+        // Verificar si necesitamos resetear el contador (nuevo día)
+        final now = DateTime.now();
+        final shouldReset = now.difference(lastReset).inHours >= 24;
+
+        if (shouldReset && !isPremium) {
+          // Resetear contador
+          await _supabase
+              .from('users')
+              .update({
+                'daily_filter_searches_used': 0,
+                'last_filter_search_reset': now.toIso8601String(),
+              })
+              .eq('id', user.id);
+
+          setState(() {
+            _isPremium = isPremium;
+            _dailyFilterSearchesUsed = 0;
+          });
+        } else {
+          setState(() {
+            _isPremium = isPremium;
+            _dailyFilterSearchesUsed = searchesUsed;
+          });
+        }
       }
 
       // Si no es premium, cargar anuncios
@@ -123,6 +154,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    // Verificar si el usuario gratuito ha alcanzado el límite de búsquedas con filtros
+    bool useFilters = true;
+    if (!_isPremium && _dailyFilterSearchesUsed >= _maxFreeFilterSearches) {
+      // Usuario gratuito sin búsquedas disponibles - búsqueda completamente aleatoria
+      useFilters = false;
+
+      // Mostrar mensaje informativo
+      _showInfoDialog(
+        '🎲 Búsqueda aleatoria',
+        'Has alcanzado el límite de 3 búsquedas con filtros por hoy. Esta búsqueda será completamente aleatoria.\n\n¡Actualiza a Premium para búsquedas ilimitadas!',
+      );
+    }
+
+    // Incrementar contador si es usuario gratuito y usa filtros
+    if (!_isPremium && useFilters) {
+      await _incrementFilterSearchCounter();
+    }
+
     // Mostrar interstitial ad cada 3 búsquedas (solo si no es premium)
     if (!_isPremium) {
       _adService.showInterstitialIfReady();
@@ -136,8 +185,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final place = await _placesService.findRandomPlace(
         latitude: _currentPosition!.latitude,
         longitude: _currentPosition!.longitude,
-        placeType: _selectedType,
-        radiusInKm: _searchRadius,
+        placeType: useFilters ? _selectedType : 'random',
+        radiusInKm: useFilters
+            ? _searchRadius
+            : 50.0, // Mayor radio si es aleatorio
       );
 
       if (place != null) {
@@ -316,6 +367,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  void _showInfoDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title, style: const TextStyle(color: AppColors.primary)),
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _incrementFilterSearchCounter() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        final newCount = _dailyFilterSearchesUsed + 1;
+
+        await _supabase
+            .from('users')
+            .update({'daily_filter_searches_used': newCount})
+            .eq('id', user.id);
+
+        setState(() {
+          _dailyFilterSearchesUsed = newCount;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error incrementando contador: $e');
+    }
   }
 
   @override
@@ -512,33 +604,136 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildFiltersToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+    final remainingSearches = _isPremium
+        ? null
+        : (_maxFreeFilterSearches - _dailyFilterSearchesUsed);
+    final hasSearchesLeft = _isPremium || remainingSearches! > 0;
+
+    return Column(
+      children: [
+        // Insignia de plan y contador
+        if (!_isPremium) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.textMuted.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.textMuted.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.label, size: 16, color: AppColors.textMuted),
+                const SizedBox(width: 6),
+                const Text(
+                  'GRATUITO',
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasSearchesLeft
+                        ? AppColors.primary.withOpacity(0.2)
+                        : AppColors.error.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$remainingSearches/$_maxFreeFilterSearches con filtros',
+                    style: TextStyle(
+                      color: hasSearchesLeft
+                          ? AppColors.primary
+                          : AppColors.error,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 12),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD700).withOpacity(0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.star, size: 16, color: Colors.black),
+                SizedBox(width: 6),
+                Text(
+                  'PREMIUM',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () {
-          setState(() {
-            _showFilters = !_showFilters;
-          });
-        },
-        icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
-        label: Text(_showFilters ? 'Ocultar Filtros' : 'Filtros'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(
+
+        // Botón de filtros
+        Container(
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.secondary.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _showFilters = !_showFilters;
+              });
+            },
+            icon: Icon(
+              _showFilters ? Icons.filter_list_off : Icons.filter_list,
+            ),
+            label: Text(_showFilters ? 'Ocultar Filtros' : 'Filtros'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondary,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 

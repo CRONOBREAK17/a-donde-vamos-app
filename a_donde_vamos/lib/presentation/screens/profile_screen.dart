@@ -282,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Text(
-                      '\$4.99',
+                      '\$30',
                       style: TextStyle(
                         color: Color(0xFFFFD700),
                         fontSize: 32,
@@ -290,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Text(
-                      ' /mes',
+                      ' MXN/mes',
                       style: TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 16,
