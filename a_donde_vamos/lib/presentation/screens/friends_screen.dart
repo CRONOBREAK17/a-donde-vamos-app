@@ -1,8 +1,11 @@
 // lib/presentation/screens/friends_screen.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/rank_utils.dart';
+import '../../data/services/friendship_service.dart';
+import '../widgets/neon_alert_dialog.dart';
 import 'user_profile_screen.dart';
+import 'friend_requests_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -12,16 +15,20 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  final _supabase = Supabase.instance.client;
+  final _friendshipService = FriendshipService();
 
   bool _isLoading = false;
+  bool _isSearching = false;
   List<Map<String, dynamic>> _friends = [];
+  List<Map<String, dynamic>> _searchResults = [];
+  int _pendingRequestsCount = 0;
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadFriends();
+    _loadPendingCount();
   }
 
   @override
@@ -33,81 +40,61 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<void> _loadFriends() async {
     setState(() => _isLoading = true);
 
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
+    final friends = await _friendshipService.getFriends();
 
-      // Cargar amigos (user_friends con JOIN a users)
-      final response = await _supabase
-          .from('user_friends')
-          .select(
-            'friend:users!user_friends_friend_id_fkey(id, username, profile_picture, activity_points)',
-          )
-          .eq('user_id', user.id)
-          .order('created_at', ascending: false);
+    setState(() {
+      _friends = friends;
+      _isLoading = false;
+    });
+  }
 
-      setState(() {
-        _friends = List<Map<String, dynamic>>.from(
-          response.map((item) => item['friend'] as Map<String, dynamic>),
-        );
-      });
-    } catch (e) {
-      debugPrint('Error loading friends: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
+  Future<void> _loadPendingCount() async {
+    final incoming = await _friendshipService.getIncomingRequests();
+    setState(() {
+      _pendingRequestsCount = incoming.length;
+    });
   }
 
   Future<void> _searchUsers(String query) async {
     if (query.trim().isEmpty) {
-      _loadFriends();
+      setState(() {
+        _isSearching = false;
+        _searchResults = [];
+      });
       return;
     }
 
     setState(() => _isLoading = true);
 
-    try {
-      final response = await _supabase
-          .from('users')
-          .select('id, username, profile_picture, activity_points')
-          .ilike('username', '%$query%')
-          .limit(20);
+    final results = await _friendshipService.searchUsers(query);
 
-      setState(() {
-        _friends = List<Map<String, dynamic>>.from(response);
-      });
-    } catch (e) {
-      debugPrint('Error searching users: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    setState(() {
+      _searchResults = results;
+      _isSearching = true;
+      _isLoading = false;
+    });
   }
 
-  // Método para agregar amigos - se puede usar desde un diálogo de búsqueda mejorado
-  // ignore: unused_element
-  Future<void> _addFriend(String friendId) async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
+  Future<void> _sendFriendRequest(String userId) async {
+    final result = await _friendshipService.sendFriendRequest(userId);
 
-      await _supabase.from('user_friends').insert({
-        'user_id': user.id,
-        'friend_id': friendId,
-      });
+    if (!mounted) return;
 
-      _loadFriends();
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Amigo agregado')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
+    if (result['success']) {
+      NeonAlertDialog.show(
+        context: context,
+        icon: Icons.check_circle,
+        title: '¡Listo!',
+        message: result['message'],
+      );
+      _searchUsers(_searchController.text);
+    } else {
+      NeonAlertDialog.show(
+        context: context,
+        icon: Icons.error_outline,
+        title: 'Aviso',
+        message: result['message'],
+      );
     }
   }
 
@@ -119,28 +106,114 @@ class _FriendsScreenState extends State<FriendsScreen> {
         title: const Text('👥 Amigos'),
         backgroundColor: AppColors.cardBackground,
         actions: [
+          // Botón de solicitudes con badge
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.mail_outline),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FriendRequestsScreen(),
+                    ),
+                  );
+                  _loadPendingCount();
+                },
+                tooltip: 'Solicitudes',
+              ),
+              if (_pendingRequestsCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_pendingRequestsCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () => _showSearchDialog(),
-            tooltip: 'Buscar amigos',
+            tooltip: 'Buscar usuarios',
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _friends.isEmpty
-          ? _buildEmptyState()
-          : RefreshIndicator(
-              onRefresh: _loadFriends,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(15),
-                itemCount: _friends.length,
-                itemBuilder: (context, index) {
-                  final friend = _friends[index];
-                  return _buildFriendCard(friend);
-                },
+      body: Column(
+        children: [
+          // Barra de búsqueda
+          if (_isSearching)
+            Container(
+              padding: const EdgeInsets.all(15),
+              color: AppColors.cardBackground,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Resultados: ${_searchResults.length}',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _isSearching = false;
+                        _searchResults = [];
+                      });
+                    },
+                    icon: const Icon(Icons.close, size: 18),
+                    label: const Text('Cerrar'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
+
+          // Lista
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _isSearching
+                ? _buildSearchResults()
+                : _friends.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: _loadFriends,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(15),
+                      itemCount: _friends.length,
+                      itemBuilder: (context, index) {
+                        final friend = _friends[index];
+                        return _buildFriendCard(friend);
+                      },
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -186,10 +259,42 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  Widget _buildFriendCard(Map<String, dynamic> friend) {
-    final username = friend['username'] as String? ?? 'Usuario';
-    final profilePic = friend['profile_picture'] as String?;
-    final activityPoints = friend['activity_points'] as int? ?? 0;
+  Widget _buildSearchResults() {
+    if (_searchResults.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 80,
+              color: AppColors.textMuted.withOpacity(0.5),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No se encontraron usuarios',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(15),
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final user = _searchResults[index];
+        return _buildSearchResultCard(user);
+      },
+    );
+  }
+
+  Widget _buildSearchResultCard(Map<String, dynamic> user) {
+    final username = user['username'] as String? ?? 'Usuario';
+    final profilePic = user['profile_picture'] as String?;
+    final activityPoints = user['activity_points'] as int? ?? 0;
+    final rankInfo = RankUtils.getRankInfo(activityPoints);
 
     return Card(
       color: AppColors.cardBackground,
@@ -200,20 +305,30 @@ class _FriendsScreenState extends State<FriendsScreen> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(15),
-        leading: CircleAvatar(
-          radius: 30,
-          backgroundColor: AppColors.primary.withOpacity(0.2),
-          backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
-          child: profilePic == null
-              ? Text(
-                  username[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                )
-              : null,
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: rankInfo.color, width: 2),
+          ),
+          child: CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundImage: profilePic != null
+                ? NetworkImage(profilePic)
+                : null,
+            child: profilePic == null
+                ? Text(
+                    username[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: rankInfo.color,
+                    ),
+                  )
+                : null,
+          ),
         ),
         title: Text(
           username,
@@ -223,9 +338,104 @@ class _FriendsScreenState extends State<FriendsScreen> {
             fontSize: 16,
           ),
         ),
-        subtitle: Text(
-          '⭐ $activityPoints puntos',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              rankInfo.title,
+              style: TextStyle(color: rankInfo.color, fontSize: 12),
+            ),
+            Text(
+              '$activityPoints pts',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
+          ],
+        ),
+        trailing: ElevatedButton.icon(
+          onPressed: () => _sendFriendRequest(user['id']),
+          icon: const Icon(Icons.person_add, size: 18),
+          label: const Text('Agregar'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfileScreen(userId: user['id']),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFriendCard(Map<String, dynamic> friend) {
+    final username = friend['username'] as String? ?? 'Usuario';
+    final profilePic = friend['profile_picture'] as String?;
+    final activityPoints = friend['activity_points'] as int? ?? 0;
+    final rankInfo = RankUtils.getRankInfo(activityPoints);
+
+    return Card(
+      color: AppColors.cardBackground,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(15),
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: rankInfo.color, width: 2),
+          ),
+          child: CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColors.primary.withOpacity(0.2),
+            backgroundImage: profilePic != null
+                ? NetworkImage(profilePic)
+                : null,
+            child: profilePic == null
+                ? Text(
+                    username[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: rankInfo.color,
+                    ),
+                  )
+                : null,
+          ),
+        ),
+        title: Text(
+          username,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              rankInfo.title,
+              style: TextStyle(color: rankInfo.color, fontSize: 12),
+            ),
+            Text(
+              '$activityPoints pts',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
+          ],
         ),
         trailing: const Icon(
           Icons.arrow_forward_ios,
