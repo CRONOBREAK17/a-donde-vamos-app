@@ -24,6 +24,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
   int _pendingRequestsCount = 0;
   final _searchController = TextEditingController();
 
+  // Mapa para guardar el estado de amistad de cada usuario buscado
+  final Map<String, String> _friendshipStatuses = {};
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +63,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       setState(() {
         _isSearching = false;
         _searchResults = [];
+        _friendshipStatuses.clear();
       });
       return;
     }
@@ -67,6 +71,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
     setState(() => _isLoading = true);
 
     final results = await _friendshipService.searchUsers(query);
+
+    // Verificar el estado de amistad para cada resultado
+    _friendshipStatuses.clear();
+    for (var user in results) {
+      final status = await _friendshipService.checkFriendshipStatus(user['id']);
+      _friendshipStatuses[user['id']] = status;
+    }
 
     setState(() {
       _searchResults = results;
@@ -81,13 +92,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (!mounted) return;
 
     if (result['success']) {
+      // Actualizar el estado local inmediatamente
+      setState(() {
+        _friendshipStatuses[userId] = 'request_sent';
+      });
+
       NeonAlertDialog.show(
         context: context,
         icon: Icons.check_circle,
         title: '¡Listo!',
         message: result['message'],
       );
-      _searchUsers(_searchController.text);
     } else {
       NeonAlertDialog.show(
         context: context,
@@ -295,6 +310,67 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final profilePic = user['profile_picture'] as String?;
     final activityPoints = user['activity_points'] as int? ?? 0;
     final rankInfo = RankUtils.getRankInfo(activityPoints);
+    final userId = user['id'] as String;
+    final friendshipStatus = _friendshipStatuses[userId] ?? 'none';
+
+    // Determinar el botón según el estado
+    Widget trailingButton;
+    if (friendshipStatus == 'friends') {
+      trailingButton = ElevatedButton.icon(
+        onPressed: null, // Deshabilitado
+        icon: const Icon(Icons.check, size: 18),
+        label: const Text('Amigos'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.textMuted.withOpacity(0.3),
+          foregroundColor: AppColors.textMuted,
+          disabledBackgroundColor: AppColors.textMuted.withOpacity(0.3),
+          disabledForegroundColor: AppColors.textMuted,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } else if (friendshipStatus == 'request_sent') {
+      trailingButton = ElevatedButton.icon(
+        onPressed: null, // Deshabilitado
+        icon: const Icon(Icons.schedule, size: 18),
+        label: const Text('Pendiente'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.textMuted.withOpacity(0.3),
+          foregroundColor: AppColors.textMuted,
+          disabledBackgroundColor: AppColors.textMuted.withOpacity(0.3),
+          disabledForegroundColor: AppColors.textMuted,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } else if (friendshipStatus == 'request_received') {
+      trailingButton = ElevatedButton.icon(
+        onPressed: null, // Deshabilitado - deben ir a solicitudes para aceptar
+        icon: const Icon(Icons.mail, size: 18),
+        label: const Text('Solicitud'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary.withOpacity(0.3),
+          foregroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+          disabledForegroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } else {
+      // Estado 'none' - puede agregar
+      trailingButton = ElevatedButton.icon(
+        onPressed: () => _sendFriendRequest(userId),
+        icon: const Icon(Icons.person_add, size: 18),
+        label: const Text('Agregar'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    }
 
     return Card(
       color: AppColors.cardBackground,
@@ -351,19 +427,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
           ],
         ),
-        trailing: ElevatedButton.icon(
-          onPressed: () => _sendFriendRequest(user['id']),
-          icon: const Icon(Icons.person_add, size: 18),
-          label: const Text('Agregar'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
+        trailing: trailingButton,
         onTap: () {
           Navigator.push(
             context,
