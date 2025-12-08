@@ -128,23 +128,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     try {
+      debugPrint('🔍 Iniciando obtención de ubicación...');
       final position = await _locationService.getCurrentLocation();
+
       if (!mounted) return;
 
       if (position != null) {
+        debugPrint(
+          '✅ Ubicación obtenida exitosamente: ${position.latitude}, ${position.longitude}',
+        );
         setState(() {
           _currentPosition = position;
+          _locationError = null;
         });
       } else {
+        debugPrint('⚠️ getCurrentLocation retornó null');
         setState(() {
-          _locationError = 'No se pudo obtener la ubicación';
+          _locationError =
+              'No se pudo obtener la ubicación. Verifica los permisos y el GPS.';
         });
       }
     } catch (e) {
+      debugPrint('❌ Error capturado en _getCurrentLocation: $e');
+
       if (!mounted) return;
 
+      String errorMessage = e.toString();
+
+      // Mensajes de error más amigables
+      if (errorMessage.contains('deshabilitado')) {
+        errorMessage = 'GPS deshabilitado. Actívalo en configuración.';
+      } else if (errorMessage.contains('denegados')) {
+        errorMessage =
+            'Permisos de ubicación denegados. Actívalos en configuración.';
+      } else if (errorMessage.contains('TimeoutException')) {
+        errorMessage = 'Timeout obteniendo ubicación. Intenta de nuevo.';
+      } else if (errorMessage.contains('varios intentos')) {
+        errorMessage =
+            'No se pudo obtener ubicación. Asegúrate de tener GPS activo.';
+      }
+
       setState(() {
-        _locationError = e.toString();
+        _locationError = errorMessage;
       });
     }
   }

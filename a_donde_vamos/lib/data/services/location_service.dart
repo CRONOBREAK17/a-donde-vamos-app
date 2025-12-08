@@ -23,12 +23,30 @@ class LocationService {
       // Verificar si el servicio de ubicación está habilitado
       bool serviceEnabled = await isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw Exception('El servicio de ubicación está deshabilitado');
+        print(
+          '⚠️ Servicio de ubicación deshabilitado, intentando con última ubicación conocida...',
+        );
+        // Intentar obtener última ubicación conocida
+        try {
+          Position? lastPosition = await Geolocator.getLastKnownPosition();
+          if (lastPosition != null) {
+            print('✅ Usando última ubicación conocida');
+            return lastPosition;
+          }
+        } catch (e) {
+          print('❌ No se pudo obtener última ubicación: $e');
+        }
+        throw Exception(
+          'El servicio de ubicación está deshabilitado. Por favor, actívalo en la configuración.',
+        );
       }
 
       // Verificar permisos
       LocationPermission permission = await checkPermission();
+      print('📍 Estado de permisos: $permission');
+
       if (permission == LocationPermission.denied) {
+        print('🔐 Solicitando permisos...');
         permission = await requestPermission();
         if (permission == LocationPermission.denied) {
           throw Exception('Permisos de ubicación denegados');
@@ -41,17 +59,55 @@ class LocationService {
         );
       }
 
-      // Obtener ubicación actual con timeout para evitar congelamiento
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy
-            .medium, // Cambiado de high a medium para ser más rápido
-        timeLimit: const Duration(seconds: 10), // Timeout de 10 segundos
-      );
+      print('🎯 Obteniendo ubicación actual...');
 
-      return position;
+      // Intentar primero con última ubicación conocida (más rápido)
+      try {
+        Position? lastPosition = await Geolocator.getLastKnownPosition(
+          forceAndroidLocationManager: true,
+        );
+        if (lastPosition != null) {
+          final age = DateTime.now().difference(lastPosition.timestamp);
+          // Si la ubicación tiene menos de 5 minutos, usarla
+          if (age.inMinutes < 5) {
+            print(
+              '✅ Usando última ubicación conocida (${age.inSeconds}s de antigüedad)',
+            );
+            return lastPosition;
+          }
+        }
+      } catch (e) {
+        print('⚠️ No hay última ubicación: $e');
+      }
+
+      // Obtener ubicación actual con configuración optimizada para emulador
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          forceAndroidLocationManager: true, // Importante para emuladores
+          timeLimit: const Duration(seconds: 30), // Timeout más largo
+        );
+        print(
+          '✅ Ubicación obtenida: ${position.latitude}, ${position.longitude}',
+        );
+        return position;
+      } catch (e) {
+        print('❌ Error en getCurrentPosition: $e');
+
+        // Último intento: usar cualquier ubicación disponible
+        Position? anyPosition = await Geolocator.getLastKnownPosition();
+        if (anyPosition != null) {
+          print('✅ Usando última ubicación disponible como fallback');
+          return anyPosition;
+        }
+
+        throw Exception(
+          'No se pudo obtener la ubicación después de varios intentos',
+        );
+      }
     } catch (e) {
-      print('Error obteniendo ubicación: $e');
-      return null;
+      print('❌ Error obteniendo ubicación: $e');
+      rethrow;
     }
   }
 
