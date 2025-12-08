@@ -293,7 +293,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       child: GestureDetector(
         onTap: () => _showBadgeDetails(badge, awardedAt),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -318,31 +318,34 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Icono del logro
               Hero(
                 tag: 'badge_${badge['name']}',
                 child: Text(
                   badge['icon_url'] ?? '🏅',
-                  style: const TextStyle(fontSize: 42),
+                  style: const TextStyle(fontSize: 38),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // Nombre
-              Text(
-                badge['name'] ?? '',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  badge['name'] ?? '',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
 
               // Fecha (opcional)
               if (awardedAt != null)
@@ -350,9 +353,11 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   _formatDate(awardedAt),
                   style: TextStyle(
                     color: AppColors.textMuted.withOpacity(0.7),
-                    fontSize: 9,
+                    fontSize: 8,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
             ],
           ),
