@@ -1,6 +1,7 @@
 // lib/presentation/screens/premium_screen.dart
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/currency_utils.dart';
 
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
@@ -123,27 +124,27 @@ class PremiumScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(color: const Color(0xFFFFD700), width: 2),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Text(
+                  const Text(
                     'Solo',
                     style: TextStyle(fontSize: 16, color: AppColors.textMuted),
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   Text(
-                    '\$4.99',
-                    style: TextStyle(
+                    CurrencyUtils.getPriceText(),
+                    style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFFFD700),
                     ),
                   ),
-                  Text(
+                  const Text(
                     'al mes',
                     style: TextStyle(fontSize: 16, color: AppColors.textMuted),
                   ),
-                  SizedBox(height: 10),
-                  Text(
+                  const SizedBox(height: 10),
+                  const Text(
                     '💎 Cancela cuando quieras',
                     style: TextStyle(
                       fontSize: 14,

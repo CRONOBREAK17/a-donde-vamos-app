@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/rank_utils.dart';
+import '../../core/utils/currency_utils.dart';
 import '../widgets/rank_profile_picture.dart';
 import '../widgets/neon_alert_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
@@ -271,10 +272,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: const Color(0xFFFFD700).withOpacity(0.3),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Solo ',
                       style: TextStyle(
                         color: AppColors.textMuted,
@@ -282,15 +283,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Text(
-                      '\$30',
-                      style: TextStyle(
+                      CurrencyUtils.getPriceText(),
+                      style: const TextStyle(
                         color: Color(0xFFFFD700),
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      ' MXN/mes',
+                    const Text(
+                      '/mes',
                       style: TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 16,

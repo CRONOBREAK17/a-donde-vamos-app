@@ -37,8 +37,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedTimeOfDay = 'anytime';
   String _selectedCompany = 'anyone';
   bool _isPremium = false;
-  int _dailyFilterSearchesUsed = 0;
-  int _maxFreeFilterSearches = 3;
+  int _dailySearchesUsed = 0;
+  int _maxFreeSearches = 3;
+  DateTime? _lastSearchReset;
 
   Position? _currentPosition;
   LocationModel? _persistentPlace; // Lugar que permanece visible
@@ -62,16 +63,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (user != null) {
         final response = await _supabase
             .from('users')
-            .select(
-              'is_premium, daily_filter_searches_used, last_filter_search_reset',
-            )
+            .select('is_premium, daily_searches_used, last_search_reset')
             .eq('id', user.id)
             .single();
 
         final isPremium = response['is_premium'] ?? false;
-        final searchesUsed = response['daily_filter_searches_used'] ?? 0;
-        final lastReset = response['last_filter_search_reset'] != null
-            ? DateTime.parse(response['last_filter_search_reset'])
+        final searchesUsed = response['daily_searches_used'] ?? 0;
+        final lastReset = response['last_search_reset'] != null
+            ? DateTime.parse(response['last_search_reset'])
             : DateTime.now();
 
         // Verificar si necesitamos resetear el contador (nuevo día)
@@ -83,19 +82,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           await _supabase
               .from('users')
               .update({
-                'daily_filter_searches_used': 0,
-                'last_filter_search_reset': now.toIso8601String(),
+                'daily_searches_used': 0,
+                'last_search_reset': now.toIso8601String(),
               })
               .eq('id', user.id);
 
           setState(() {
             _isPremium = isPremium;
-            _dailyFilterSearchesUsed = 0;
+            _dailySearchesUsed = 0;
+            _lastSearchReset = now;
           });
         } else {
           setState(() {
             _isPremium = isPremium;
-            _dailyFilterSearchesUsed = searchesUsed;
+            _dailySearchesUsed = searchesUsed;
+            _lastSearchReset = lastReset;
           });
         }
       }
@@ -154,22 +155,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    // Verificar si el usuario gratuito ha alcanzado el límite de búsquedas con filtros
-    bool useFilters = true;
-    if (!_isPremium && _dailyFilterSearchesUsed >= _maxFreeFilterSearches) {
-      // Usuario gratuito sin búsquedas disponibles - búsqueda completamente aleatoria
-      useFilters = false;
-
-      // Mostrar mensaje informativo
-      _showInfoDialog(
-        '🎲 Búsqueda aleatoria',
-        'Has alcanzado el límite de 3 búsquedas con filtros por hoy. Esta búsqueda será completamente aleatoria.\n\n¡Actualiza a Premium para búsquedas ilimitadas!',
-      );
+    // Verificar si el usuario gratuito ha alcanzado el límite de búsquedas TOTALES
+    if (!_isPremium && _dailySearchesUsed >= _maxFreeSearches) {
+      // Mostrar modal de premium
+      _showPremiumModal();
+      return;
     }
 
-    // Incrementar contador si es usuario gratuito y usa filtros
-    if (!_isPremium && useFilters) {
-      await _incrementFilterSearchCounter();
+    // Incrementar contador si es usuario gratuito
+    if (!_isPremium) {
+      await _incrementSearchCounter();
     }
 
     // Mostrar interstitial ad cada 3 búsquedas (solo si no es premium)
@@ -185,10 +180,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final place = await _placesService.findRandomPlace(
         latitude: _currentPosition!.latitude,
         longitude: _currentPosition!.longitude,
-        placeType: useFilters ? _selectedType : 'random',
-        radiusInKm: useFilters
-            ? _searchRadius
-            : 50.0, // Mayor radio si es aleatorio
+        placeType: _selectedType,
+        radiusInKm: _searchRadius,
       );
 
       if (place != null) {
@@ -390,23 +383,152 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _incrementFilterSearchCounter() async {
+  Future<void> _incrementSearchCounter() async {
     try {
       final user = _supabase.auth.currentUser;
       if (user != null) {
-        final newCount = _dailyFilterSearchesUsed + 1;
+        final newCount = _dailySearchesUsed + 1;
 
         await _supabase
             .from('users')
-            .update({'daily_filter_searches_used': newCount})
+            .update({'daily_searches_used': newCount})
             .eq('id', user.id);
 
         setState(() {
-          _dailyFilterSearchesUsed = newCount;
+          _dailySearchesUsed = newCount;
         });
       }
     } catch (e) {
       debugPrint('Error incrementando contador: $e');
+    }
+  }
+
+  void _showPremiumModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFFFD700), width: 2),
+        ),
+        title: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star, color: Colors.black, size: 30),
+              SizedBox(width: 10),
+              Text(
+                '¡Límite Alcanzado!',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.search_off, size: 60, color: AppColors.error),
+            const SizedBox(height: 15),
+            Text(
+              'Has usado tus $_maxFreeSearches búsquedas gratuitas de hoy',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            if (_lastSearchReset != null) ...[
+              Text(
+                _getTimeUntilReset(),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: 20),
+            const Text(
+              '⭐ Con Premium tendrás:',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              '• Búsquedas ilimitadas\n• Sin anuncios\n• Filtros avanzados\n• Insignia exclusiva',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cerrar',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/premium');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              '⭐ Ver Premium',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTimeUntilReset() {
+    if (_lastSearchReset == null) return 'Resetea en 24 horas';
+
+    final now = DateTime.now();
+    final nextReset = _lastSearchReset!.add(const Duration(hours: 24));
+    final difference = nextReset.difference(now);
+
+    if (difference.isNegative) {
+      return 'Disponible ahora (recarga la app)';
+    }
+
+    final hours = difference.inHours;
+    final minutes = difference.inMinutes.remainder(60);
+
+    if (hours > 0) {
+      return 'Próximo reseteo en ${hours}h ${minutes}m';
+    } else {
+      return 'Próximo reseteo en ${minutes}m';
     }
   }
 
@@ -558,28 +680,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMainButton() {
+    final hasSearchesLeft = _isPremium || _dailySearchesUsed < _maxFreeSearches;
+    final isButtonEnabled = !_isLoading && hasSearchesLeft;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.secondary],
+        gradient: LinearGradient(
+          colors: hasSearchesLeft
+              ? [AppColors.primary, AppColors.secondary]
+              : [AppColors.textMuted, AppColors.textMuted],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.5),
+            color: hasSearchesLeft
+                ? AppColors.primary.withOpacity(0.5)
+                : Colors.transparent,
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _searchRandomPlace,
+        onPressed: isButtonEnabled
+            ? _searchRandomPlace
+            : (!hasSearchesLeft ? _showPremiumModal : null),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 20),
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -588,15 +720,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _isLoading ? AppStrings.searching : AppStrings.searchButton,
+              _isLoading
+                  ? AppStrings.searching
+                  : !hasSearchesLeft
+                  ? '🔒 Sin búsquedas disponibles'
+                  : AppStrings.searchButton,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 8),
-            const Text('🚀', style: TextStyle(fontSize: 20)),
+            if (hasSearchesLeft && !_isLoading) ...[
+              const SizedBox(width: 8),
+              const Text('🚀', style: TextStyle(fontSize: 20)),
+            ],
           ],
         ),
       ),
@@ -606,7 +744,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildFiltersToggle() {
     final remainingSearches = _isPremium
         ? null
-        : (_maxFreeFilterSearches - _dailyFilterSearchesUsed);
+        : (_maxFreeSearches - _dailySearchesUsed);
     final hasSearchesLeft = _isPremium || remainingSearches! > 0;
 
     return Column(
@@ -623,43 +761,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 1,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Column(
               children: [
-                const Icon(Icons.label, size: 16, color: AppColors.textMuted),
-                const SizedBox(width: 6),
-                const Text(
-                  'GRATUITO',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: hasSearchesLeft
-                        ? AppColors.primary.withOpacity(0.2)
-                        : AppColors.error.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '$remainingSearches/$_maxFreeFilterSearches con filtros',
-                    style: TextStyle(
-                      color: hasSearchesLeft
-                          ? AppColors.primary
-                          : AppColors.error,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.label,
+                      size: 16,
+                      color: AppColors.textMuted,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'GRATUITO',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: hasSearchesLeft
+                            ? AppColors.primary.withOpacity(0.2)
+                            : AppColors.error.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$remainingSearches/$_maxFreeSearches búsquedas',
+                        style: TextStyle(
+                          color: hasSearchesLeft
+                              ? AppColors.primary
+                              : AppColors.error,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (!hasSearchesLeft && _lastSearchReset != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.timer, size: 12, color: AppColors.error),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getTimeUntilReset(),
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
