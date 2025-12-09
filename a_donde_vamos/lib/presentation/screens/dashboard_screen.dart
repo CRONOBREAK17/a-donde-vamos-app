@@ -669,8 +669,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         // Badge en esquina superior derecha
         Positioned(
-          right: 8,
-          top: 8,
+          right: 2,
+          top: 2,
           child: Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
