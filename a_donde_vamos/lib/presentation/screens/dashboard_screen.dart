@@ -584,6 +584,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         centerTitle: true,
         actions: [
+          // Ícono de ubicación con badge
+          _buildLocationIconButton(),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -598,16 +600,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Ícono de ubicación colapsable
-              _buildLocationIcon(),
-
               // Detalles de ubicación (colapsable)
               if (_showLocationDetails) ...[
-                const SizedBox(height: 12),
                 _buildLocationDetails(),
+                const SizedBox(height: 16),
               ],
-
-              const SizedBox(height: 24),
 
               // Botón principal
               _buildMainButton(),
@@ -640,69 +637,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildLocationIcon() {
-    IconData iconData;
-    Color iconColor;
-    Color backgroundColor;
+  Widget _buildLocationIconButton() {
+    IconData badgeIcon;
+    Color badgeColor;
 
     if (_locationError != null) {
       // Error - Rojo con X
-      iconData = Icons.close;
-      iconColor = Colors.white;
-      backgroundColor = Colors.red;
+      badgeIcon = Icons.close;
+      badgeColor = Colors.red;
     } else if (_currentPosition != null) {
       // Éxito - Verde con palomita
-      iconData = Icons.check;
-      iconColor = Colors.white;
-      backgroundColor = Colors.green;
+      badgeIcon = Icons.check;
+      badgeColor = Colors.green;
     } else {
       // Cargando - Azul con reloj
-      iconData = Icons.access_time;
-      iconColor = Colors.white;
-      backgroundColor = AppColors.primary;
+      badgeIcon = Icons.access_time;
+      badgeColor = AppColors.primary;
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        GestureDetector(
-          onTap: () {
+        IconButton(
+          icon: const Icon(Icons.location_on_outlined),
+          onPressed: () {
             setState(() {
               _showLocationDetails = !_showLocationDetails;
             });
           },
+          tooltip: 'Ver ubicación',
+        ),
+        // Badge en esquina superior derecha
+        Positioned(
+          right: 6,
+          top: 6,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: badgeColor,
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: backgroundColor.withOpacity(0.4),
-                  blurRadius: 10,
-                  spreadRadius: 2,
+                  color: badgeColor.withOpacity(0.5),
+                  blurRadius: 4,
+                  spreadRadius: 1,
                 ),
               ],
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(Icons.location_on, color: iconColor, size: 28),
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    child: Icon(iconData, color: iconColor, size: 14),
-                  ),
-                ),
-              ],
-            ),
+            child: Icon(badgeIcon, color: Colors.white, size: 10),
           ),
         ),
       ],
