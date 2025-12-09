@@ -16,6 +16,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _referralCodeController = TextEditingController();
 
   bool _isLogin = true;
   bool _isLoading = false;
@@ -26,6 +27,7 @@ class _AuthScreenState extends State<AuthScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -97,6 +99,9 @@ class _AuthScreenState extends State<AuthScreen> {
           password: _passwordController.text.trim(),
           username: _usernameController.text.trim().isNotEmpty
               ? _usernameController.text.trim()
+              : null,
+          referralCode: _referralCodeController.text.trim().isNotEmpty
+              ? _referralCodeController.text.trim()
               : null,
         );
       }
@@ -212,6 +217,25 @@ class _AuthScreenState extends State<AuthScreen> {
                     labelText: 'Nombre de usuario (opcional)',
                     prefixIcon: Icon(Icons.person),
                   ),
+                ),
+                const SizedBox(height: 16),
+                // Campo de código de referido
+                TextField(
+                  controller: _referralCodeController,
+                  decoration: InputDecoration(
+                    labelText: 'Código de referido (opcional)',
+                    prefixIcon: const Icon(Icons.card_giftcard),
+                    hintText: 'ABC12345',
+                    suffixIcon: Tooltip(
+                      message: '¡Gana 20 puntos!\nTu amigo gana 40 puntos',
+                      child: Icon(
+                        Icons.info_outline,
+                        color: AppColors.primary.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: 10,
                 ),
                 const SizedBox(height: 16),
               ],

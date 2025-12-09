@@ -6,6 +6,8 @@ import 'presentation/screens/auth_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/place_detail_screen.dart';
 import 'presentation/screens/premium_screen.dart';
+import 'presentation/screens/referral_screen.dart';
+import 'presentation/screens/referral_input_screen.dart';
 import 'data/services/supabase_service.dart';
 import 'data/services/ad_service.dart';
 import 'data/models/location_model.dart';
@@ -37,6 +39,8 @@ class MyApp extends StatelessWidget {
         AppRoutes.auth: (context) => const AuthScreen(),
         AppRoutes.home: (context) => const HomeScreen(),
         AppRoutes.premium: (context) => const PremiumScreen(),
+        AppRoutes.referral: (context) => const ReferralScreen(),
+        AppRoutes.referralInput: (context) => const ReferralInputScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == AppRoutes.placeDetail) {

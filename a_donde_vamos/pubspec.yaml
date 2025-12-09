@@ -54,6 +54,9 @@ dependencies:
   # URL launcher para abrir navegación, teléfono, web
   url_launcher: ^6.3.1
   
+  # Share para compartir contenido
+  share_plus: ^10.1.2
+  
   # Formateo de fechas (DateFormat)
   intl: ^0.19.0
   

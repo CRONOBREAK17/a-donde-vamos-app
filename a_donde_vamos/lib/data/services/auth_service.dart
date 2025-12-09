@@ -19,6 +19,7 @@ class AuthService {
     required String email,
     required String password,
     String? username,
+    String? referralCode,
   }) async {
     try {
       final response = await _client.auth.signUp(
@@ -29,7 +30,7 @@ class AuthService {
 
       // Si el registro fue exitoso, crear perfil en la tabla users
       if (response.user != null) {
-        await _createUserProfile(response.user!);
+        await _createUserProfile(response.user!, referralCode: referralCode);
       }
 
       return response;
@@ -84,10 +85,7 @@ class AuthService {
           .eq('id', userId)
           .single();
 
-      if (response != null) {
-        return UserModel.fromJson(response);
-      }
-      return null;
+      return UserModel.fromJson(response);
     } catch (e) {
       print('Error al obtener perfil: $e');
       return null;
@@ -95,7 +93,7 @@ class AuthService {
   }
 
   // Crear perfil de usuario en la tabla users
-  Future<void> _createUserProfile(User user) async {
+  Future<void> _createUserProfile(User user, {String? referralCode}) async {
     try {
       // Verificar si ya existe el perfil
       final existing = await _client
@@ -115,6 +113,24 @@ class AuthService {
           'activity_points': 0,
           'is_premium': false,
         });
+
+        // Si hay código de referido, aplicarlo
+        if (referralCode != null && referralCode.isNotEmpty) {
+          try {
+            final result = await _client.rpc(
+              'apply_referral_code',
+              params: {
+                'referred_user_id': user.id,
+                'referral_code_input': referralCode.toUpperCase(),
+              },
+            );
+
+            print('Resultado de aplicar código de referido: $result');
+          } catch (e) {
+            print('Error al aplicar código de referido: $e');
+            // No lanzar error, continuar con el registro
+          }
+        }
       }
     } catch (e) {
       print('Error al crear perfil: $e');

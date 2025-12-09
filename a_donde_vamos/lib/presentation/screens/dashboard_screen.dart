@@ -50,6 +50,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // Verificar si hay ubicación simulada activa
+    _checkForMockLocation();
     // Obtener ubicación en segundo plano sin bloquear el UI
     Future.microtask(() => _getCurrentLocation());
     // Cargar sitio persistente si existe
@@ -119,6 +121,134 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _adService.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkForMockLocation() async {
+    try {
+      // Intentar obtener ubicación y verificar si es simulada
+      final position = await _locationService.getCurrentLocation();
+
+      if (position != null && position.isMocked) {
+        // Mostrar diálogo bloqueante y cerrar la app
+        if (!mounted) return;
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+              backgroundColor: AppColors.cardBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: AppColors.error, width: 3),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.error_outline, color: AppColors.error, size: 40),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '🚫 Ubicación simulada detectada',
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Esta aplicación no puede funcionar con aplicaciones de ubicación simulada activas.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.error.withOpacity(0.3),
+                      ),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '⚠️ Razones de seguridad:',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          '• Prevenir fraude en el sistema de puntos\n'
+                          '• Garantizar visitas reales a lugares\n'
+                          '• Mantener la integridad del sistema',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '💡 Para usar la app:',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '1. Desactiva cualquier app de ubicación falsa\n'
+                    '2. Reinicia esta aplicación\n'
+                    '3. Usa tu ubicación GPS real',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Cerrar la aplicación
+                    Navigator.of(context).pop();
+                    // Forzar cierre
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      // Esto forzará el cierre en Android
+                      // En producción podrías usar SystemNavigator.pop()
+                      throw Exception('App cerrada por ubicación simulada');
+                    });
+                  },
+                  icon: const Icon(Icons.exit_to_app),
+                  label: const Text('Salir de la App'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Si hay error obteniendo ubicación, dejamos que continúe
+      // El error se manejará en _getCurrentLocation
+      debugPrint('⚠️ Error verificando ubicación simulada: $e');
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -246,6 +376,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _markPlaceAsVisited() async {
     if (_persistentPlace == null) return;
+
+    // Verificar ubicación actual antes de marcar como visitado
+    if (_currentPosition == null) {
+      _showErrorDialog(
+        'Ubicación requerida',
+        'Necesitamos tu ubicación actual para verificar que estás en el lugar.',
+      );
+      return;
+    }
+
+    // Verificar si la ubicación es simulada
+    if (_currentPosition!.isMocked) {
+      _showErrorDialog(
+        '🚫 Ubicación simulada detectada',
+        'No puedes marcar lugares como visitados usando una ubicación falsa. Desactiva cualquier app de ubicación simulada y vuelve a intentarlo.',
+      );
+      return;
+    }
+
+    // Calcular distancia actual al lugar
+    final currentDistance = _locationService.calculateDistance(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      _persistentPlace!.latitude,
+      _persistentPlace!.longitude,
+    );
+
+    // Verificar si el usuario está dentro del radio permitido (50 metros)
+    const maxDistanceToVisit = 50.0; // 50 metros
+    if (currentDistance > maxDistanceToVisit) {
+      // Usuario no está lo suficientemente cerca
+      final distanceInKm = (currentDistance / 1000).toStringAsFixed(2);
+      _showProximityErrorDialog(distanceInKm);
+      return;
+    }
 
     print('📍 Marcando lugar como visitado...');
     final result = await _userPlacesService.markAsVisited(_persistentPlace!);
@@ -403,6 +568,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProximityErrorDialog(String distanceInKm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.error, width: 2),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.location_off, color: AppColors.error, size: 32),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '¡Estás muy lejos!',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Para evitar trampas, debes estar cerca del lugar para marcarlo como visitado.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.straighten,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tu distancia: $distanceInKm km',
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.green,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Máximo permitido: 50m',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '💡 Dirígete al lugar y vuelve a intentarlo cuando estés cerca.',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _openInMaps();
+            },
+            icon: const Icon(Icons.directions),
+            label: const Text('Cómo llegar'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
           ),
         ],
       ),

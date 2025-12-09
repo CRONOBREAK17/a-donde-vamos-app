@@ -12,4 +12,6 @@ class AppRoutes {
   static const String friends = '/friends';
   static const String premium = '/premium';
   static const String help = '/help';
+  static const String referral = '/referral';
+  static const String referralInput = '/referral-input';
 }
