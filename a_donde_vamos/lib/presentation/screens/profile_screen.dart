@@ -8,7 +8,6 @@ import '../../core/utils/currency_utils.dart';
 import '../widgets/rank_profile_picture.dart';
 import '../widgets/neon_alert_dialog.dart';
 import '../widgets/ad_banner_widget.dart';
-import '../widgets/video_background.dart';
 import 'achievements_screen.dart';
 import 'dart:io';
 
@@ -441,161 +440,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nextRank = RankUtils.getNextRank(_activityPoints);
     final progress = RankUtils.getProgressToNextRank(_activityPoints);
 
-    return VideoBackground(
-      activityPoints: _activityPoints,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('👤 Mi Perfil'),
-          backgroundColor: AppColors.cardBackground,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: _logout,
-              tooltip: 'Cerrar Sesión',
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('👤 Mi Perfil'),
+        backgroundColor: AppColors.cardBackground,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Cerrar Sesión',
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Foto de perfil con efecto de rango
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                RankProfilePicture(
+                  imageUrl: _profilePicture,
+                  activityPoints: _activityPoints,
+                  size: 150,
+                ),
+                if (_isLoadingImage)
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+              ],
             ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // Foto de perfil con efecto de rango
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  RankProfilePicture(
-                    imageUrl: _profilePicture,
-                    activityPoints: _activityPoints,
-                    size: 150,
-                  ),
-                  if (_isLoadingImage)
-                    Container(
-                      width: 150,
-                      height: 150,
-                      decoration: const BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                ],
-              ),
 
-              const SizedBox(height: 15),
+            const SizedBox(height: 15),
 
-              // Botón cambiar foto
-              ElevatedButton.icon(
-                onPressed: _isLoadingImage ? null : _pickAndUploadImage,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Cambiar Foto 📷'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cardBackground,
-                  foregroundColor: AppColors.textPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
+            // Botón cambiar foto
+            ElevatedButton.icon(
+              onPressed: _isLoadingImage ? null : _pickAndUploadImage,
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Cambiar Foto 📷'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cardBackground,
+                foregroundColor: AppColors.textPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
               ),
+            ),
 
-              const SizedBox(height: 15),
+            const SizedBox(height: 15),
 
-              // Botón Premium (solo si no es premium)
-              if (!_isPremium)
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFD700).withOpacity(0.4),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: _showPremiumModal,
-                    icon: const Icon(Icons.star, color: Colors.black),
-                    label: const Text(
-                      '⭐ Hazte Premium',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 15,
-                      ),
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 30),
-
-              // Detalles del perfil
+            // Botón Premium (solo si no es premium)
+            if (!_isPremium)
               Container(
-                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: rankInfo.color, width: 2),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFED4E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: rankInfo.color.withOpacity(0.3),
+                      color: const Color(0xFFFFD700).withOpacity(0.4),
                       blurRadius: 15,
                       spreadRadius: 2,
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    // Username
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: rankInfo.color.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '@$_username',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: rankInfo.color,
-                          shadows: [
-                            Shadow(
-                              color: rankInfo.color.withOpacity(0.5),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
+                child: ElevatedButton.icon(
+                  onPressed: _showPremiumModal,
+                  icon: const Icon(Icons.star, color: Colors.black),
+                  label: const Text(
+                    '⭐ Hazte Premium',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                  ),
+                ),
+              ),
 
-                    const SizedBox(height: 12),
+            const SizedBox(height: 30),
 
-                    // Etiqueta Premium/Gratuito
-                    _buildPremiumBadge(),
-
-                    const SizedBox(height: 20),
-
-                    // Rango
-                    Text(
-                      rankInfo.title,
+            // Detalles del perfil
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: rankInfo.color, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: rankInfo.color.withOpacity(0.3),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Username
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: rankInfo.color.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '@$_username',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 3,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                         color: rankInfo.color,
                         shadows: [
                           Shadow(
@@ -604,276 +576,297 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
+                  ),
 
-                    const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
-                    // Puntos
-                    Text(
-                      '✨ Puntos de Actividad: $_activityPoints',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 14,
-                      ),
-                    ),
+                  // Etiqueta Premium/Gratuito
+                  _buildPremiumBadge(),
 
-                    const SizedBox(height: 15),
+                  const SizedBox(height: 20),
 
-                    // Barra de progreso
-                    Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 12,
-                            backgroundColor: Colors.grey[800],
-                            valueColor: AlwaysStoppedAnimation(rankInfo.color),
-                          ),
+                  // Rango
+                  Text(
+                    rankInfo.title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                      color: rankInfo.color,
+                      shadows: [
+                        Shadow(
+                          color: rankInfo.color.withOpacity(0.5),
+                          blurRadius: 10,
                         ),
-                        const SizedBox(height: 5),
-                        if (nextRank != null)
-                          Text(
-                            'Próximo: ${nextRank.title} (${nextRank.minPoints} pts)',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 11,
-                            ),
-                          )
-                        else
-                          Text(
-                            '¡Rango máximo alcanzado! 🎉',
-                            style: TextStyle(
-                              color: rankInfo.color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                       ],
                     ),
+                    textAlign: TextAlign.center,
+                  ),
 
-                    const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
-                    // Biografía
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  // Puntos
+                  Text(
+                    '✨ Puntos de Actividad: $_activityPoints',
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Barra de progreso
+                  Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 12,
+                          backgroundColor: Colors.grey[800],
+                          valueColor: AlwaysStoppedAnimation(rankInfo.color),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      if (nextRank != null)
                         Text(
-                          '📝 Sobre mí:',
+                          'Próximo: ${nextRank.title} (${nextRank.minPoints} pts)',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 11,
+                          ),
+                        )
+                      else
+                        Text(
+                          '¡Rango máximo alcanzado! 🎉',
                           style: TextStyle(
                             color: rankInfo.color,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _descriptionController,
-                          maxLines: 4,
-                          maxLength: 200,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            hintText: 'Escribe algo sobre ti...',
-                            hintStyle: const TextStyle(
-                              color: AppColors.textMuted,
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Biografía
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '📝 Sobre mí:',
+                        style: TextStyle(
+                          color: rankInfo.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _descriptionController,
+                        maxLines: 4,
+                        maxLength: 200,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Escribe algo sobre ti...',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                          ),
+                          filled: true,
+                          fillColor: Colors.black87,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: rankInfo.color,
+                              width: 2,
                             ),
-                            filled: true,
-                            fillColor: Colors.black87,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: rankInfo.color,
-                                width: 2,
-                              ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: rankInfo.color.withOpacity(0.5),
+                              width: 2,
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: rankInfo.color.withOpacity(0.5),
-                                width: 2,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: rankInfo.color,
-                                width: 2,
-                              ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: rankInfo.color,
+                              width: 2,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _updateDescription,
-                          icon: const Icon(Icons.save),
-                          label: const Text('Guardar 💾'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: rankInfo.color.withOpacity(0.2),
-                            foregroundColor: rankInfo.color,
-                            side: BorderSide(color: rankInfo.color, width: 1),
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _updateDescription,
+                        icon: const Icon(Icons.save),
+                        label: const Text('Guardar 💾'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: rankInfo.color.withOpacity(0.2),
+                          foregroundColor: rankInfo.color,
+                          side: BorderSide(color: rankInfo.color, width: 1),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Email
+                  Text(
+                    'Email: $_email',
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Botón para ver logros
+            Container(
+              width: double.infinity,
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.3),
+                    AppColors.secondary.withOpacity(0.3),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.5),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            AchievementsScreen(
+                              badges: _badges,
+                              activityPoints: _activityPoints,
+                            ),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(1.0, 0.0);
+                              const end = Offset.zero;
+                              const curve = Curves.easeInOut;
+
+                              var tween = Tween(
+                                begin: begin,
+                                end: end,
+                              ).chain(CurveTween(curve: curve));
+                              var offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        // Icono animado
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFFFFD700),
+                                const Color(0xFFFF8C00),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFD700).withOpacity(0.4),
+                                blurRadius: 15,
+                                spreadRadius: 3,
+                              ),
+                            ],
                           ),
+                          child: const Icon(
+                            Icons.emoji_events,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // Texto
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                '🏆 Ver Mis Logros',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                '${_badges.length} ${_badges.length == 1 ? "logro desbloqueado" : "logros desbloqueados"}',
+                                style: TextStyle(
+                                  color: AppColors.textMuted.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Flecha
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: AppColors.primary.withOpacity(0.7),
+                          size: 24,
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 15),
-
-                    // Email
-                    Text(
-                      'Email: $_email',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // Botón para ver logros
-              Container(
-                width: double.infinity,
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.3),
-                      AppColors.secondary.withOpacity(0.3),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.5),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  AchievementsScreen(
-                                    badges: _badges,
-                                    activityPoints: _activityPoints,
-                                  ),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                                const begin = Offset(1.0, 0.0);
-                                const end = Offset.zero;
-                                const curve = Curves.easeInOut;
-
-                                var tween = Tween(
-                                  begin: begin,
-                                  end: end,
-                                ).chain(CurveTween(curve: curve));
-                                var offsetAnimation = animation.drive(tween);
-
-                                return SlideTransition(
-                                  position: offsetAnimation,
-                                  child: child,
-                                );
-                              },
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          // Icono animado
-                          Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFFFFD700),
-                                  const Color(0xFFFF8C00),
-                                ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFFFFD700,
-                                  ).withOpacity(0.4),
-                                  blurRadius: 15,
-                                  spreadRadius: 3,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events,
-                              size: 40,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-
-                          // Texto
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  '🏆 Ver Mis Logros',
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '${_badges.length} ${_badges.length == 1 ? "logro desbloqueado" : "logros desbloqueados"}',
-                                  style: TextStyle(
-                                    color: AppColors.textMuted.withOpacity(0.9),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Flecha
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: AppColors.primary.withOpacity(0.7),
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ),
+            ),
 
-              // Banner ad para usuarios no premium
-              if (!_isPremium)
-                const Padding(
-                  padding: EdgeInsets.only(top: 30, bottom: 10),
-                  child: AdBannerWidget(),
-                ),
-            ],
-          ),
+            // Banner ad para usuarios no premium
+            if (!_isPremium)
+              const Padding(
+                padding: EdgeInsets.only(top: 30, bottom: 10),
+                child: AdBannerWidget(),
+              ),
+          ],
         ),
       ),
     );
