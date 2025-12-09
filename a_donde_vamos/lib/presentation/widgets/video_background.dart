@@ -93,23 +93,78 @@ class _VideoBackgroundState extends State<VideoBackground> {
     // Solo mostrar video si es Leyenda Cósmica (1000+ puntos)
     final showVideo = widget.activityPoints >= 1000;
 
-    debugPrint(
-      '🎥 BUILD - showVideo: $showVideo, _isInitialized: $_isInitialized, _controller != null: ${_controller != null}',
-    );
-    debugPrint('🎥 Status: $_debugStatus');
+    print('═════════════════════════════════════');
+    print('🎥 VideoBackground BUILD');
+    print('🎥 Activity Points: ${widget.activityPoints}');
+    print('🎥 showVideo: $showVideo (necesita >= 1000)');
+    print('🎥 _isInitialized: $_isInitialized');
+    print('🎥 _controller != null: ${_controller != null}');
+    print('🎥 Status: $_debugStatus');
+    print('═════════════════════════════════════');
 
     return Stack(
       children: [
         // 1. Fondo oscuro (SIEMPRE presente)
-        Positioned.fill(
+        Positioned.fill(child: Container(color: const Color(0xFF0A0E27))),
+
+        // DEBUG: Info visible en pantalla
+        Positioned(
+          top: 80,
+          left: 0,
+          right: 0,
           child: Container(
-            color: const Color(0xFF0A0E27),
-            child: Center(
-              child: Text(
-                'DEBUG: $_debugStatus\nPoints: ${widget.activityPoints}\nVideo: $showVideo\nInit: $_isInitialized',
-                style: const TextStyle(color: Colors.red, fontSize: 10),
-                textAlign: TextAlign.center,
-              ),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
+            color: Colors.black.withOpacity(0.9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '🎥 VIDEO DEBUG',
+                  style: const TextStyle(
+                    color: Colors.yellow,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Points: ${widget.activityPoints}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+                Text(
+                  'Show Video: $showVideo',
+                  style: TextStyle(
+                    color: showVideo ? Colors.green : Colors.red,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Initialized: $_isInitialized',
+                  style: TextStyle(
+                    color: _isInitialized ? Colors.green : Colors.orange,
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  'Controller: ${_controller != null}',
+                  style: TextStyle(
+                    color: _controller != null ? Colors.green : Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  'Status: $_debugStatus',
+                  style: const TextStyle(color: Colors.cyan, fontSize: 11),
+                ),
+                if (_controller != null && _isInitialized)
+                  Text(
+                    'Video: ${_controller!.value.size.width}x${_controller!.value.size.height}',
+                    style: const TextStyle(color: Colors.lime, fontSize: 11),
+                  ),
+              ],
             ),
           ),
         ),
