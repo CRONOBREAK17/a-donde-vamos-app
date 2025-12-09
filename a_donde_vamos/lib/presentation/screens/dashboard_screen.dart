@@ -32,6 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _isLoading = false;
   bool _showFilters = false;
+  bool _showLocationDetails = false;
   String _selectedType = 'restaurant';
   double _searchRadius = 3.0; // en km
   String _selectedTimeOfDay = 'anytime';
@@ -597,8 +598,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Estado de ubicación
-              _buildLocationStatus(),
+              // Ícono de ubicación colapsable
+              _buildLocationIcon(),
+
+              // Detalles de ubicación (colapsable)
+              if (_showLocationDetails) ...[
+                const SizedBox(height: 12),
+                _buildLocationDetails(),
+              ],
+
               const SizedBox(height: 24),
 
               // Botón principal
@@ -632,27 +640,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildLocationStatus() {
+  Widget _buildLocationIcon() {
+    IconData iconData;
+    Color iconColor;
+    Color backgroundColor;
+
+    if (_locationError != null) {
+      // Error - Rojo con X
+      iconData = Icons.close;
+      iconColor = Colors.white;
+      backgroundColor = Colors.red;
+    } else if (_currentPosition != null) {
+      // Éxito - Verde con palomita
+      iconData = Icons.check;
+      iconColor = Colors.white;
+      backgroundColor = Colors.green;
+    } else {
+      // Cargando - Azul con reloj
+      iconData = Icons.access_time;
+      iconColor = Colors.white;
+      backgroundColor = AppColors.primary;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _showLocationDetails = !_showLocationDetails;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: backgroundColor.withOpacity(0.4),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.location_on, color: iconColor, size: 28),
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Icon(iconData, color: iconColor, size: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationDetails() {
     String statusText;
     Color statusColor;
-    IconData statusIcon;
 
     if (_locationError != null) {
       statusText = _locationError!;
-      statusColor = AppColors.secondary;
-      statusIcon = Icons.location_off;
+      statusColor = Colors.red;
     } else if (_currentPosition != null) {
       statusText =
           'Ubicación obtenida (${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)})';
-      statusColor = AppColors.primary;
-      statusIcon = Icons.location_on;
+      statusColor = Colors.green;
     } else {
       statusText = 'Obteniendo ubicación...';
       statusColor = AppColors.primary;
-      statusIcon = Icons.location_searching;
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
@@ -661,16 +736,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Row(
         children: [
-          _currentPosition == null && _locationError == null
-              ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: statusColor,
-                  ),
-                )
-              : Icon(statusIcon, color: statusColor),
+          if (_currentPosition == null && _locationError == null)
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: statusColor,
+              ),
+            )
+          else
+            Icon(
+              _locationError != null ? Icons.location_off : Icons.location_on,
+              color: statusColor,
+            ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -695,7 +774,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           if (_locationError != null)
             IconButton(
-              icon: const Icon(Icons.refresh, color: AppColors.secondary),
+              icon: const Icon(Icons.refresh, color: Colors.red),
               onPressed: _getCurrentLocation,
               tooltip: 'Reintentar',
             ),
