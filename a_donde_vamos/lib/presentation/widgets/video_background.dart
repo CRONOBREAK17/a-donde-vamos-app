@@ -23,22 +23,25 @@ class VideoBackground extends StatefulWidget {
 }
 
 class _VideoBackgroundState extends State<VideoBackground> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
+    // Solo inicializar video si el usuario es Leyenda Cósmica
+    if (widget.activityPoints >= 1000) {
+      _initializeVideo();
+    }
   }
 
   Future<void> _initializeVideo() async {
     try {
       _controller = VideoPlayerController.asset(widget.videoPath);
-      await _controller.initialize();
-      _controller.setLooping(true);
-      _controller.setVolume(0); // Sin sonido
-      _controller.play();
+      await _controller!.initialize();
+      _controller!.setLooping(true);
+      _controller!.setVolume(0); // Sin sonido
+      _controller!.play();
 
       if (mounted) {
         setState(() {
@@ -52,7 +55,7 @@ class _VideoBackgroundState extends State<VideoBackground> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -65,13 +68,13 @@ class _VideoBackgroundState extends State<VideoBackground> {
       children: [
         // Fondo: Video para Leyenda Cósmica, negro para otros
         Positioned.fill(
-          child: showVideo && _isInitialized
+          child: showVideo && _isInitialized && _controller != null
               ? FittedBox(
                   fit: BoxFit.cover,
                   child: SizedBox(
-                    width: _controller.value.size.width,
-                    height: _controller.value.size.height,
-                    child: VideoPlayer(_controller),
+                    width: _controller!.value.size.width,
+                    height: _controller!.value.size.height,
+                    child: VideoPlayer(_controller!),
                   ),
                 )
               : Container(
@@ -80,7 +83,7 @@ class _VideoBackgroundState extends State<VideoBackground> {
         ),
 
         // Overlay semi-transparente solo si hay video (para legibilidad)
-        if (showVideo && _isInitialized)
+        if (showVideo && _isInitialized && _controller != null)
           Positioned.fill(
             child: Container(color: Colors.black.withOpacity(widget.opacity)),
           ),

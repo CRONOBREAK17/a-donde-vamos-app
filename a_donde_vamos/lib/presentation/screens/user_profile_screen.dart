@@ -84,15 +84,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final nextRank = RankUtils.getNextRank(_activityPoints);
     final progress = RankUtils.getProgressToNextRank(_activityPoints);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(_username),
-        backgroundColor: AppColors.cardBackground,
-      ),
-      body: VideoBackground(
-        activityPoints: _activityPoints,
-        child: SingleChildScrollView(
+    return VideoBackground(
+      activityPoints: _activityPoints,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(_username),
+          backgroundColor: AppColors.cardBackground,
+        ),
+        body: SingleChildScrollView(
           child: Column(
             children: [
               const SizedBox(height: 30),

@@ -441,22 +441,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nextRank = RankUtils.getNextRank(_activityPoints);
     final progress = RankUtils.getProgressToNextRank(_activityPoints);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('👤 Mi Perfil'),
-        backgroundColor: AppColors.cardBackground,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-            tooltip: 'Cerrar Sesión',
-          ),
-        ],
-      ),
-      body: VideoBackground(
-        activityPoints: _activityPoints,
-        child: SingleChildScrollView(
+    return VideoBackground(
+      activityPoints: _activityPoints,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('👤 Mi Perfil'),
+          backgroundColor: AppColors.cardBackground,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: _logout,
+              tooltip: 'Cerrar Sesión',
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
